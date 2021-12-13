@@ -1,16 +1,23 @@
 {
-  "name": "merge-change",
-  "version": "1.8.1",
-  "description": "Simple library for deep merge of objects and other types (also for patch and immutable updates). Declarative operations to specific merge, for example to remove properties. Customize merging between specific types. Calculating diffs.",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "test": "node ./node_modules/jest/bin/jest.js --runInBand --verbose --forceExit"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/VladimirShestakov/merge-change.git"
-  },
+  "license": "MIT",
+  "version": "1.8.2",
+  "name": "@clevercanyon/js-object-mc",
+  "description": "Simple library for deep merge of objects and other types (also for patch and immutable updates). Declarative operations to merge, for example to remove specific properties. Customize merging between specific types. Calculate diffs.",
+	"repository": "github:clevercanyon/js-object-mc",
+	"homepage": "https://github.com/clevercanyon/js-object-mc",
+	"bugs": {
+		"url": "https://github.com/clevercanyon/js-object-mc/issues"
+	},
+	"contributors": [
+    {
+			"name": "CLEVER CANYON",
+			"url": "https://clevercanyon.com"
+		},
+		{
+			"name": "Vladimir Shestakov",
+			"url": "https://github.com/VladimirShestakov/merge-change"
+		}
+	],
   "keywords": [
     "merge",
     "object",
@@ -34,12 +41,11 @@
     "improve",
     "enhance"
   ],
-  "author": "Vladimir Shestakov",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/VladimirShestakov/merge-change.git"
+  "scripts": {
+    "start": "node index.js",
+    "test": "node ./node_modules/jest/bin/jest.js --runInBand --verbose --forceExit"
   },
-  "homepage": "https://github.com/VladimirShestakov/merge-change.git#readme",
+  "main": "index.js",
   "dependencies": {},
   "devDependencies": {
     "eslint": "^7.31.0",

@@ -1,4 +1,17 @@
-# merge-change
+# CLEVER CANYON: JS Object MC
+## A fork of the original [merge-change](https://www.npmjs.com/package/merge-change) on NPM.
+
+Install this fork with [NPM](https://www.npmjs.com/) as follows:
+
+```sh
+$ npm install --save @clevercanyon/js-object-mc;
+```
+
+As noted, this is a fork of [VladimirShestakov/merge-change](https://github.com/VladimirShestakov/merge-change) that has been patched to resolve [this prototype pollution security issue](https://github.com/advisories/GHSA-f9cv-665r-275h). The original, but slightly modified README file continues below.
+
+---
+
+# JS Object MC
 
 Simple library for **deep merge** of objects and other types, also for **patches** and **immutable updates**.
 By default, merge works for "plain objects".
@@ -9,10 +22,10 @@ Calculating diffs between two values.
 
 ## Install
 
-Install with [npm](https://www.npmjs.com/):
+Install with [NPM](https://www.npmjs.com/):
 
 ```sh
-$ npm install --save merge-change
+$ npm install --save @clevercanyon/js-object-mc;
 ```
 
 ## API
@@ -26,7 +39,7 @@ mc.merge(source, ...values);
 ```
 Example
 ```js
-const mc = require('merge-change');
+const mc = require('@clevercanyon/js-object-mc');
 
 // Create new object with adding "a.three" and deleting "a.one"
 let first = {
@@ -114,7 +127,7 @@ console.log(result !== second); // => true
 console.log(result.a.sub === first.a.sub); // => true
 ```
 
-## Declarative operations
+## Declarative Operations
 
 When merging objects, you can perform delete and replace properties at the same time.
 Use declarative operations in second or next arguments. Supported in all merge methods.
@@ -128,10 +141,10 @@ To set (or replace) property without deep merge.
 const result = mc.merge(
   {
     a: {
-      one: 1, 
+      one: 1,
       two: 2
     }
-  }, 
+  },
   {
     $set: {
       a: {
@@ -148,7 +161,7 @@ Result
 ```json
 {
   "a": {
-    "one": 1, 
+    "one": 1,
     "two": 20,
     "three": 3
   }
@@ -163,10 +176,10 @@ To unset properties by name (or path)
  const result = mc.merge(
    {
      a: {
-       one: 1, 
+       one: 1,
        two: 2
      }
-   }, 
+   },
    {
      $unset: ['a.two']
    }
@@ -189,10 +202,10 @@ Result
  const result = mc.merge(
    {
      a: {
-       one: 1, 
+       one: 1,
        two: 2
      }
-   }, 
+   },
    {
      $unset: ['a.*']
    }
@@ -215,11 +228,11 @@ To leave properties by name (or path). All other properties will be removed.
  const result = mc(
    {
      a: {
-       one: 1, 
+       one: 1,
        two: 2,
        tree: 3
      }
-   }, 
+   },
    {
      a: {
        $leave: ['two']
@@ -248,8 +261,8 @@ To push one value to the array property. The source property must be an array.
    {
      prop1: ['a', 'b'],
      prop2: ['a', 'b'],
-   }, 
-   // Merge    
+   },
+   // Merge
    {
      $push: {
        prop1: ['c', 'd'],
@@ -270,9 +283,7 @@ Result
 
 ### `$concat`
 
-To union arrays.
-
-The source property must be an array. The property in secondary arguments may not be an array.
+To concatenate arrays. The source property must be an array. The property in secondary arguments may not be an array.
 
  ```js
  const result = mc(
@@ -280,8 +291,8 @@ The source property must be an array. The property in secondary arguments may no
    {
      prop1: ['a', 'b'],
      prop2: ['a', 'b'],
-   }, 
-   // Merge    
+   },
+   // Merge
    {
      $concat: {
        prop1: ['c', 'd'],
@@ -301,7 +312,7 @@ Result
  ```
 
 
-## Customize merge
+## Customize Merge
 
 You can declare function for merge custom types (or override default logic). Returns previous merge method.
 
@@ -311,9 +322,9 @@ You can declare function for merge custom types (or override default logic). Ret
 - `callback` - merge function with argument: (first, second, kind)
     - `first` - first value for merge
     - `second` - second value for merge
-    - `kind` - name of merging method, such as "merge", "patch", "update". 
+    - `kind` - name of merging method, such as "merge", "patch", "update".
 
-For example, if you always need to union arrays, you can declare method to merge array with array. 
+For example, if you always need to union arrays, you can declare method to merge array with array.
 
 ```js
 const previous = mc.addMerge('Array', 'Array', function(first, second, kind){
@@ -338,7 +349,7 @@ const previous = mc.addMerge('Array', 'Array', function(first, second, kind){
 mc.addMerge('Array', 'Array', previous);
 ```
 
-## Customize declarative operation
+## Customize Declarative Operation
 
 You can declare function for declarative operation (or override default logic). Returns previous operation method.
 
@@ -376,12 +387,12 @@ mc.addOperation('$concat', previous);
 Useful functions - utilities
 
 ```js
-const utils = require('merge-change').utils;
+const utils = require('@clevercanyon/js-object-mc').utils;
 ```
 
 ### `utils.diff(source, compare, {ignore = [], separator = '.'})`
 
-To calculate the difference between `source` and `compare` value. 
+To calculate the difference between `source` and `compare` value.
 The return value is an object with `$set` and `$unset` operators. Return value can be used in merge functions.
 The `ignore` parameter - is a list of properties that are not included in the comparison.
 
@@ -421,8 +432,8 @@ Result (diff)
     'profile.avatar.url': 'new/pic.png',
     'access': [ 700 ]
   },
-  $unset: [ 
-    'profile.birthday', 
+  $unset: [
+    'profile.birthday',
     'name'
   ]
 }
@@ -468,8 +479,8 @@ Result (plain)
 ```
 {
   date: '2021-01-07T19:10:21.759Z',
-  prop: { 
-    _id: '6010a8c75b9b393070e42e68' 
+  prop: {
+    _id: '6010a8c75b9b393070e42e68'
   }
 }
 ```
@@ -499,5 +510,6 @@ Result (flat)
 
 ## License
 
-Copyright © 2020, [VladimirShestakov](https://github.com/VladimirShestakov).
-Released under the [MIT License](LICENSE).
+- Released under an [MIT License](LICENSE).
+- Original copyright 2020 © [VladimirShestakov](https://github.com/VladimirShestakov).
+- Fork of this repo is copyright 2021 © [CLEVER CANYON LLC](https://github.com/clevercanyon/js-object-mc).
