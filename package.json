@@ -1,23 +1,23 @@
 {
   "license": "MIT",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "name": "@clevercanyon/js-object-mc",
   "description": "Simple library for deep merge of objects and other types (also for patch and immutable updates). Declarative operations to merge, for example to remove specific properties. Customize merging between specific types. Calculate diffs.",
-	"repository": "github:clevercanyon/js-object-mc",
-	"homepage": "https://github.com/clevercanyon/js-object-mc",
-	"bugs": {
-		"url": "https://github.com/clevercanyon/js-object-mc/issues"
-	},
-	"contributors": [
+  "repository": "github:clevercanyon/js-object-mc",
+  "homepage": "https://github.com/clevercanyon/js-object-mc",
+  "bugs": {
+    "url": "https://github.com/clevercanyon/js-object-mc/issues"
+  },
+  "contributors": [
     {
-			"name": "CLEVER CANYON",
-			"url": "https://clevercanyon.com"
-		},
-		{
-			"name": "Vladimir Shestakov",
-			"url": "https://github.com/VladimirShestakov/merge-change"
-		}
-	],
+      "name": "CLEVER CANYON",
+      "url": "https://clevercanyon.com"
+    },
+    {
+      "name": "Vladimir Shestakov",
+      "url": "https://github.com/VladimirShestakov/merge-change"
+    }
+  ],
   "keywords": [
     "merge",
     "object",
