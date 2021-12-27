@@ -161,9 +161,8 @@ Result
 ```json
 {
   "a": {
-    "one": 1,
-    "two": 20,
-    "three": 3
+    "three": 3,
+    "two": 20
   }
 }
 ```
