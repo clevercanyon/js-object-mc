@@ -1,54 +1,57 @@
 {
-  "license": "MIT",
-  "version": "1.8.4",
-  "name": "@clevercanyon/js-object-mc",
-  "description": "Simple library for deep merge of objects and other types (also for patch and immutable updates). Declarative operations to merge, for example to remove specific properties. Customize merging between specific types. Calculate diffs.",
-  "repository": "github:clevercanyon/js-object-mc",
-  "homepage": "https://github.com/clevercanyon/js-object-mc",
-  "bugs": {
-    "url": "https://github.com/clevercanyon/js-object-mc/issues"
-  },
-  "contributors": [
-    {
-      "name": "CLEVER CANYON",
-      "url": "https://clevercanyon.com"
-    },
-    {
-      "name": "Vladimir Shestakov",
-      "url": "https://github.com/VladimirShestakov/merge-change"
-    }
-  ],
-  "keywords": [
-    "merge",
-    "object",
-    "patch",
-    "update",
-    "deep",
-    "mixin",
-    "change",
-    "extend",
-    "config",
-    "util",
-    "compose",
-    "make",
-    "create",
-    "build",
-    "clone",
-    "assemble",
-    "mutate",
-    "assign",
-    "refresh",
-    "improve",
-    "enhance"
-  ],
-  "scripts": {
-    "start": "node index.js",
-    "test": "node ./node_modules/jest/bin/jest.js --runInBand --verbose --forceExit"
-  },
-  "main": "index.js",
-  "dependencies": {},
-  "devDependencies": {
-    "eslint": "^7.31.0",
-    "jest": "^27.0.6"
-  }
+	"license"         : "MIT",
+	"version"         : "1.8.4",
+	"name"            : "@clevercanyon/js-object-mc",
+	"description"     : "Simple library for deep merge of objects and other types (also for patch and immutable updates). Declarative operations to merge, for example to remove specific properties. Customize merging between specific types. Calculate diffs.",
+	"repository"      : "github:clevercanyon/js-object-mc",
+	"homepage"        : "https://github.com/clevercanyon/js-object-mc",
+	"bugs"            : {
+		"url" : "https://github.com/clevercanyon/js-object-mc/issues"
+	},
+	"contributors"    : [
+		{
+			"name" : "CLEVER CANYON",
+			"url"  : "https://clevercanyon.com"
+		},
+		{
+			"name" : "Vladimir Shestakov",
+			"url"  : "https://github.com/VladimirShestakov/merge-change"
+		}
+	],
+	"keywords"        : [
+		"merge",
+		"object",
+		"patch",
+		"update",
+		"deep",
+		"mixin",
+		"change",
+		"extend",
+		"config",
+		"util",
+		"compose",
+		"make",
+		"create",
+		"build",
+		"clone",
+		"assemble",
+		"mutate",
+		"assign",
+		"refresh",
+		"improve",
+		"enhance"
+	],
+	"scripts"         : {
+		"start" : "node index.js",
+		"test"  : "node ./node_modules/jest/bin/jest.js --runInBand --verbose --forceExit"
+	},
+	"main"            : "index.js",
+	"dependencies"    : { },
+	"devDependencies" : {
+		"eslint" : "^7.31.0",
+		"jest"   : "^27.0.6"
+	},
+	"publishConfig"   : {
+		"registry" : "https://npm.pkg.github.com"
+	}
 }
