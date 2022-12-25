@@ -43,7 +43,7 @@
   ],
   "scripts": {
     "start": "node index.js",
-    "test": "node ./node_modules/jest/bin/jest.js --runInBand --verbose --forceExit"
+    "tests": "node ./node_modules/jest/bin/jest.js --runInBand --verbose --forceExit"
   },
   "main": "index.js",
   "dependencies": {},
