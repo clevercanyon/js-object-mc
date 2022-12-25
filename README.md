@@ -1,6 +1,6 @@
 # `merge-change` Fork
 
-A fork of the original [merge-change](https://www.npmjs.com/package/merge-change) on NPM.  
+A fork of the original [merge-change](https://www.npmjs.com/package/merge-change) on NPM.
 This fork has been patched to resolve a [prototype pollution security issue](https://github.com/advisories/GHSA-f9cv-665r-275h).
 
 `merge-change` is a simple library for **deep merge** of objects and other types, also for **patches** and **immutable updates**.
@@ -368,7 +368,7 @@ mc.addOperation('$concat', previous);
 Useful functions - utilities
 
 ```js
-const utils = require('@clevercanyon/js-object-mc').utils;
+const utils = require('@clevercanyon/merge-change.fork').utils;
 ```
 
 ### `utils.diff(source, compare, {ignore = [], separator = '.'})`
