@@ -1,4 +1,18 @@
 ##
+# NPM ignore file.
+#
+# NPM is aware of this config file's location.
+#
+# Run the following to test configuration:
+#
+#     $ npm pack --dry-run
+#
+# @note CUSTOM EDITS ONLY PLEASE!
+# @note In the future this file will be updated automatically.
+# @note Only `<custom:start.../custom:end>` will be preserved below.
+##
+
+##
 # This part follows `.gitignore` exactly.
 ##
 
@@ -221,3 +235,9 @@ tailwind.config.*
 # See: <https://docs.npmjs.com/cli/v9/configuring-npm/package-json#files>
 # See: <https://docs.npmjs.com/cli/v8/using-npm/developers?v=true#keeping-files-out-of-your-package>
 ##
+
+##
+# Customizations
+# <custom:start>
+
+# </custom:end>

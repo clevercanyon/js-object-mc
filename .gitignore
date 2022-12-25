@@ -1,3 +1,13 @@
+##
+# Git ignore file.
+#
+# Git is aware of this config file's location.
+#
+# @note CUSTOM EDITS ONLY PLEASE!
+# @note In the future this file will be updated automatically.
+# @note Only `<custom:start.../custom:end>` will be preserved below.
+##
+
 # Local
 
 .#*
@@ -169,3 +179,9 @@ Icon?
 .DocumentRevisions-V100/
 Network Trash Folder/
 Temporary Items/
+
+##
+# Customizations
+# <custom:start>
+
+# </custom:end>
