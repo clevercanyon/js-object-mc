@@ -8,15 +8,24 @@
   "homepage": "https://github.com/clevercanyon/merge-change.fork#readme",
   "bugs": "https://github.com/clevercanyon/merge-change.fork/issues",
   "funding": "https://github.com/sponsors/clevercanyon",
+  "keywords": [
+    "clevercanyon"
+  ],
   "author": {
     "name": "Vladimir Shestakov",
-    "url": "https://github.com/VladimirShestakov/merge-change"
+    "url": "https://github.com/VladimirShestakov"
   },
   "contributors": [
     {
       "name": "Clever Canyon",
       "url": "https://clevercanyon.com"
     }
+  ],
+  "files": [
+    "index.js",
+    "merge-change.js",
+    "methods.js",
+    "utils.js"
   ],
   "main": "index.js",
   "scripts": {
