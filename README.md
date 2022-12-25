@@ -1,32 +1,14 @@
-# CLEVER CANYON: JS Object MC
-## A fork of the original [merge-change](https://www.npmjs.com/package/merge-change) on NPM.
+# `merge-change` Fork
 
-Install this fork with [NPM](https://www.npmjs.com/) as follows:
+A fork of the original [merge-change](https://www.npmjs.com/package/merge-change) on NPM.  
+This fork has been patched to resolve a [prototype pollution security issue](https://github.com/advisories/GHSA-f9cv-665r-275h).
 
-```sh
-$ npm install --save @clevercanyon/js-object-mc;
-```
-
-As noted, this is a fork of [VladimirShestakov/merge-change](https://github.com/VladimirShestakov/merge-change) that has been patched to resolve [this prototype pollution security issue](https://github.com/advisories/GHSA-f9cv-665r-275h). The original, but slightly modified README file continues below.
-
----
-
-# JS Object MC
-
-Simple library for **deep merge** of objects and other types, also for **patches** and **immutable updates**.
+`merge-change` is a simple library for **deep merge** of objects and other types, also for **patches** and **immutable updates**.
 By default, merge works for "plain objects".
 Values of other types are replaced, but you can **customize merging** between specific types.
 Also, you can use **declarative operations** to specific merge like `unset`, `leave`, `push` and other.
 For example to remove some properties of object, to replace "plain objects", to concat arrays.
 Calculating diffs between two values.
-
-## Install
-
-Install with [NPM](https://www.npmjs.com/):
-
-```sh
-$ npm install --save @clevercanyon/js-object-mc;
-```
 
 ## API
 
@@ -39,7 +21,7 @@ mc.merge(source, ...values);
 ```
 Example
 ```js
-const mc = require('@clevercanyon/js-object-mc');
+const mc = require('@clevercanyon/merge-change.fork');
 
 // Create new object with adding "a.three" and deleting "a.one"
 let first = {
@@ -511,4 +493,4 @@ Result (flat)
 
 - Released under an [MIT License](LICENSE).
 - Original copyright 2020 © [VladimirShestakov](https://github.com/VladimirShestakov).
-- Fork of this repo is copyright 2021 © [CLEVER CANYON LLC](https://github.com/clevercanyon/js-object-mc).
+- Fork of this repo is copyright 2021 © [Clever Canyon](https://github.com/clevercanyon/merge-change.fork).
