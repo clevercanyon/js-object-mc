@@ -189,7 +189,11 @@ Temporary Items/
 # Source Code
 
 dev/
+
+doc/
 docs/
+
+test/
 tests/
 
 .*
