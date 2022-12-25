@@ -1,6 +1,6 @@
 {
   "license": "MIT",
-  "version": "1.8.8",
+  "version": "1.8.9",
   "name": "@clevercanyon/merge-change.fork",
   "description": "Simple library for deep merge of objects and other types (also for patch and immutable updates). Declarative operations to merge, for example to remove specific properties. Customize merging between specific types. Calculate diffs.",
   "repository": "github:clevercanyon/merge-change.fork",
