@@ -84,6 +84,14 @@ jspm_packages/
 
 bower_components/
 
+# Dotenv
+
+.env*
+.flaskenv*
+
+!.env.vault
+!.env.project
+
 # TypeScript
 
 typings/
@@ -97,6 +105,8 @@ typings/
 # Wrangler
 
 .wrangler/
+.dev.vars
+.dev.vars.*
 
 # Rollup
 
@@ -192,27 +202,45 @@ Temporary Items/
 # These are in addition to what we have in `.gitignore`.
 ##
 
-# GitHub
-
-.github/
-
-# Allow Dists
-
-!dist/
-
-# Source Code
+# Dev
 
 dev/
-bench/
+
+# Docs
 
 doc/
 docs/
 
+# Tests
+
 test/
 tests/
 
+# Examples
+
 example/
 examples/
+
+# Benchmarks
+
+bench/
+benchmark/
+benchmarks/
+
+# Dotenv
+
+.env.vault
+.env.project
+
+# GitHub
+
+.github/
+
+# Dists
+
+!dist/
+
+# Source
 
 .*
 __*
@@ -222,6 +250,7 @@ __*
 !*.d.ts
 *.jsx
 *.ejs
+
 *.scss
 *.less
 
@@ -229,6 +258,7 @@ __*
 *.spec.*
 *.readme.*
 
+jsconfig.*
 tsconfig.*
 wrangler.*
 vite.config.*
