@@ -1,7 +1,7 @@
 {
   "private": false,
   "license": "MIT",
-  "version": "1.8.11",
+  "version": "1.8.12",
   "name": "@clevercanyon/merge-change.fork",
   "description": "Simple library for deep merge of objects.",
   "repository": "https://github.com/clevercanyon/merge-change.fork",
