@@ -3,7 +3,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"version": "1.8.17",
+	"version": "1.8.18",
 	"license": "MIT",
 	"name": "@clevercanyon/merge-change.fork",
 	"description": "Simple library for deep merge of objects.",
@@ -11,9 +11,7 @@
 	"homepage": "https://github.com/clevercanyon/merge-change.fork#readme",
 	"bugs": "https://github.com/clevercanyon/merge-change.fork/issues",
 	"funding": "https://github.com/sponsors/clevercanyon",
-	"keywords": [
-		"clevercanyon"
-	],
+	"keywords": ["clevercanyon"],
 	"author": {
 		"name": "Vladimir Shestakov",
 		"url": "https://github.com/VladimirShestakov"
@@ -25,12 +23,7 @@
 		}
 	],
 	"type": "commonjs",
-	"files": [
-		"/index.js",
-		"/merge-change.js",
-		"/methods.js",
-		"/utils.js"
-	],
+	"files": ["/index.js", "/merge-change.js", "/methods.js", "/utils.js"],
 	"bin": {},
 	"imports": {},
 	"exports": null,
@@ -38,7 +31,7 @@
 	"module": "",
 	"main": "./index.js",
 	"browser": "",
-	"unpkg": "./index.js",
+	"unpkg": "",
 	"types": "",
 	"typesVersions": {},
 	"dependencies": {},
@@ -47,18 +40,12 @@
 	"optionalDependencies": {},
 	"bundleDependencies": [],
 	"devDependencies": {
-		"@clevercanyon/skeleton-dev-deps": "^1.0.91"
+		"@clevercanyon/skeleton-dev-deps": "^1.0.99"
 	},
 	"overrides": {},
 	"workspaces": [],
-	"cpu": [
-		"x64",
-		"arm64"
-	],
-	"os": [
-		"darwin",
-		"linux"
-	],
+	"cpu": ["x64", "arm64"],
+	"os": ["darwin", "linux"],
 	"engines": {
 		"node": "^19.2.0 || ^19.4.0",
 		"npm": "^8.19.3 || ^9.2.0"
@@ -79,11 +66,11 @@
 						"architects": "push"
 					},
 					"labels": {},
-					"configVersion": "",
+					"configVersion": "1.0.1",
 					"envsVersion": ""
 				},
 				"npmjs": {
-					"configVersions": ""
+					"configVersions": "1.0.1,1.0.0"
 				}
 			}
 		}
