@@ -1,41 +1,80 @@
 {
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
-  "license": "MIT",
-  "version": "1.8.15",
-  "name": "@clevercanyon/merge-change.fork",
-  "description": "Simple library for deep merge of objects.",
-  "repository": "https://github.com/clevercanyon/merge-change.fork",
-  "homepage": "https://github.com/clevercanyon/merge-change.fork#readme",
-  "bugs": "https://github.com/clevercanyon/merge-change.fork/issues",
-  "funding": "https://github.com/sponsors/clevercanyon",
-  "keywords": [
-    "clevercanyon"
-  ],
-  "author": {
-    "name": "Vladimir Shestakov",
-    "url": "https://github.com/VladimirShestakov"
-  },
-  "contributors": [
-    {
-      "name": "Clever Canyon",
-      "url": "https://clevercanyon.com"
-    }
-  ],
-  "files": [
-    "/index.js",
-    "/merge-change.js",
-    "/methods.js",
-    "/utils.js"
-  ],
-  "main": "./index.js",
-  "unpkg": "./index.js",
-  "scripts": {
-    "tests": "npx jest"
-  },
-  "devDependencies": {
-    "jest": "^27.0.6"
-  }
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"version": "1.8.15",
+	"license": "MIT",
+	"name": "@clevercanyon/merge-change.fork",
+	"description": "Simple library for deep merge of objects.",
+	"repository": "https://github.com/clevercanyon/merge-change.fork",
+	"homepage": "https://github.com/clevercanyon/merge-change.fork#readme",
+	"bugs": "https://github.com/clevercanyon/merge-change.fork/issues",
+	"funding": "https://github.com/sponsors/clevercanyon",
+	"keywords": ["clevercanyon"],
+	"author": {
+		"name": "Vladimir Shestakov",
+		"url": "https://github.com/VladimirShestakov"
+	},
+	"contributors": [
+		{
+			"name": "Clever Canyon",
+			"url": "https://clevercanyon.com"
+		}
+	],
+	"type": "commonjs",
+	"files": ["/index.js", "/merge-change.js", "/methods.js", "/utils.js"],
+	"bin": {},
+	"imports": {},
+	"exports": {
+		".": "./index.js"
+	},
+	"sideEffects": [],
+	"module": "",
+	"main": "./index.js",
+	"browser": "",
+	"unpkg": "./index.js",
+	"types": "",
+	"typesVersions": {},
+	"dependencies": {},
+	"peerDependencies": {},
+	"peerDependenciesMeta": {},
+	"optionalDependencies": {},
+	"bundleDependencies": [],
+	"devDependencies": {
+		"@clevercanyon/skeleton-dev-deps": "^1.0.91"
+	},
+	"overrides": {},
+	"workspaces": [],
+	"cpu": ["x64", "arm64"],
+	"os": ["darwin", "linux"],
+	"engines": {
+		"node": "^19.2.0 || ^19.4.0",
+		"npm": "^8.19.3 || ^9.2.0"
+	},
+	"config": {
+		"c10n": {
+			"&": {
+				"dotfiles": {
+					"lock": []
+				},
+				"build": {
+					"appType": "",
+					"targetEnv": ""
+				},
+				"github": {
+					"teams": {
+						"engineers": "pull",
+						"architects": "push"
+					},
+					"labels": {},
+					"configVersion": "",
+					"envsVersion": ""
+				},
+				"npmjs": {
+					"configVersions": ""
+				}
+			}
+		}
+	}
 }
