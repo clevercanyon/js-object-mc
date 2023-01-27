@@ -1,4 +1,4 @@
-# `merge-change` Fork
+# @clevercanyon/merge-change.fork
 
 A fork of the original [merge-change](https://www.npmjs.com/package/merge-change) on NPM.
 This fork has been patched to resolve a [prototype pollution security issue](https://github.com/advisories/GHSA-f9cv-665r-275h).
