@@ -3,7 +3,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"version": "1.8.22",
+	"version": "1.8.23",
 	"license": "MIT",
 	"name": "@clevercanyon/merge-change.fork",
 	"description": "Simple library for deep merge of objects.",
@@ -11,7 +11,9 @@
 	"homepage": "https://github.com/clevercanyon/merge-change.fork#readme",
 	"bugs": "https://github.com/clevercanyon/merge-change.fork/issues",
 	"funding": "https://github.com/sponsors/clevercanyon",
-	"keywords": ["clevercanyon"],
+	"keywords": [
+		"clevercanyon"
+	],
 	"author": {
 		"name": "Vladimir Shestakov",
 		"url": "https://github.com/VladimirShestakov"
@@ -23,7 +25,13 @@
 		}
 	],
 	"type": "commonjs",
-	"files": ["/index.js", "/index.d.ts", "/merge-change.js", "/methods.js", "/utils.js"],
+	"files": [
+		"/index.js",
+		"/index.d.ts",
+		"/merge-change.js",
+		"/methods.js",
+		"/utils.js"
+	],
 	"bin": {},
 	"imports": {},
 	"exports": null,
@@ -44,8 +52,14 @@
 	},
 	"overrides": {},
 	"workspaces": [],
-	"cpu": ["x64", "arm64"],
-	"os": ["darwin", "linux"],
+	"cpu": [
+		"x64",
+		"arm64"
+	],
+	"os": [
+		"darwin",
+		"linux"
+	],
 	"engines": {
 		"node": "^19.2.0 || ^19.4.0",
 		"npm": "^8.19.3 || ^9.2.0"
