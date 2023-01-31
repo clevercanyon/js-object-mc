@@ -23,7 +23,7 @@
 		}
 	],
 	"type": "commonjs",
-	"files": ["/index.js", "/merge-change.js", "/methods.js", "/utils.js"],
+	"files": ["/index.js", "/index.d.ts", "/merge-change.js", "/methods.js", "/utils.js"],
 	"bin": {},
 	"imports": {},
 	"exports": null,
@@ -32,7 +32,7 @@
 	"main": "./index.js",
 	"browser": "",
 	"unpkg": "",
-	"types": "",
+	"types": "./index.d.ts",
 	"typesVersions": {},
 	"dependencies": {},
 	"peerDependencies": {},
