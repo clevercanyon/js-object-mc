@@ -8,13 +8,21 @@ const methods = require('./methods.js');
  * @returns {MergeChange}
  */
 function MergeChange() {
-  return this;
+  return this; // Picks up `utils`, `methods`.
 }
+
+/**
+ * Utilities.
+ *
+ * @type {object}
+ */
+MergeChange.u = utils; // Static.
+MergeChange.prototype.u = MergeChange.u;
 
 /**
  * Kinds of merges.
  *
- * @type {{MERGE: string, UPDATE: string, PATCH: string}}
+ * @type {object}
  */
 MergeChange.KINDS = {
   MERGE: 'merge',  // Deep clone.
@@ -501,7 +509,7 @@ MergeChange.prototype.operation$pull = function (source, params, separator = '.'
 
     if (Array.isArray(array)) {
       for (let i = array.length - 1; i >= 0; i--) {
-        for( cond of conds ) {
+        for(cond of conds) {
           if (utils.equal(cond, array[i])) {
             array.splice(i, 1);
             break;

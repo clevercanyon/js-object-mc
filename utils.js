@@ -185,7 +185,7 @@ const utilities = {
 
   diff: (source, compare, {ignore = [], separator = '.', white = [], path = '', equal = utilities.equal}, result) => {
     if (!result) {
-      result = {$set: {}, $unset: []};
+      result = 'ꓺ' === separator ? {$ꓺset: {}, $ꓺunset: []} : {$set: {}, $unset: []};
     }
     const sourcePlain = source && typeof source.toJSON === 'function' ? source.toJSON() : source;
     const comparePlain = compare && typeof compare.toJSON === 'function' ? compare.toJSON() : compare;
@@ -202,7 +202,11 @@ const utilities = {
 
         if (!ignore.includes(p) && (white.length === 0 || white.includes(p))) {
           if (!(key in sourcePlain)) {
-            result.$set[p] = comparePlain[key];
+            if( 'ꓺ' === separator ) {
+              result.$ꓺset[p] = comparePlain[key];
+            } else {
+              result.$set[p] = comparePlain[key];
+            }
           } else
           if (!equal(comparePlain[key], sourcePlain[key])) {
             utilities.diff(sourcePlain[key], comparePlain[key], {ignore, separator, white, path: p, equal}, result);
@@ -213,7 +217,11 @@ const utilities = {
         if (!(key in comparePlain)) {
           const p = path ? path + separator + key : key;
           if (!ignore.includes(p) && (white.length === 0 || white.includes(p))) {
-            result.$unset.push(p);
+            if( 'ꓺ' === separator ) {
+              result.$ꓺunset.push(p);
+            } else {
+              result.$unset.push(p);
+            }
           }
         }
       }
@@ -222,7 +230,11 @@ const utilities = {
         result = compare;
       } else {
         if (!ignore.includes(path) && (white.length === 0 || white.includes(path))) {
-          result.$set[path] = compare;
+          if( 'ꓺ' === separator ) {
+            result.$ꓺset[path] = compare;
+          } else {
+            result.$set[path] = compare;
+          }
         }
       }
     }
@@ -274,6 +286,8 @@ const utilities = {
     return result;
   },
 
+  // This needs further testing and more explanation.
+  // Currently an undocumented and unused feature internally.
   match: (value, condition = {}, data = {}, separator = '.', errors) => {
     let result = true; // Initialize.
     const flat = utilities.plain(utilities.flat(value, '', separator));
@@ -285,14 +299,18 @@ const utilities = {
 
     for (const key of keys){
       if (condition[key] !== flat[key]){
-        if (typeof condition[key] === 'string' && condition[key].startsWith('$')){
-          const realCondition = utilities.get(data, condition[key].substring(1), undefined, separator);
+        if (typeof condition[key] === 'string' && condition[key].startsWith('$ꓺ')){
+          const realCondition = utilities.get(data, condition[key].substring('$ꓺ'.length), undefined, separator);
+          if (realCondition === flat[key] && key in flat) break;
+          //
+        } else if (typeof condition[key] === 'string' && condition[key].startsWith('$')){
+          const realCondition = utilities.get(data, condition[key].substring('$'.length), undefined, separator);
           if (realCondition === flat[key] && key in flat) break;
         }
-        let arrayEq = false;
+        let arrayEq = false; // Initialize.
 
         if (Array.isArray(condition[key]) && Array.isArray(flat[key]) && condition[key].length === flat[key].length){
-          arrayEq = true;
+          arrayEq = true; // Same length.
 
           for (let i = 0; i < condition[key].length; i++){
             if (!utilities.match(flat[key][i], condition[key][i], data, separator)){
@@ -316,6 +334,11 @@ const utilities = {
     return ['__proto__', 'constructor', 'prototype'].includes(prop);
   }
 };
+
+/**
+ * Supported `flat` alias.
+ */
+utilities.flatten = utilities.flat;
 
 /**
  * @deprecated use utils.plain;
