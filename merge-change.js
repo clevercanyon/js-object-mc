@@ -447,42 +447,6 @@ MergeChange.prototype.operation$ꓺleave = function(source, params, separator = 
 }
 
 /**
- * Operation: `$pull`.
- *
- * @param source
- * @param params
- *
- * @returns {boolean}
- */
-MergeChange.prototype.operation$pull = function (source, params, separator = '.') {
-  if (source && typeof source[methods.toOperation] === 'function') {
-    source = source[methods.toOperation]();
-  } else if (source && typeof source.toJSON === 'function') {
-    source = source.toJSON();
-  }
-  const paths = Object.keys(params);
-
-  for (const path of paths) {
-    const cond = params[path];
-    const array = utils.get(source, path, [], separator);
-
-    if (Array.isArray(array)) {
-      for (let i = array.length - 1; i >= 0; i--) {
-        if (utils.equal(cond, array[i])) {
-          source.splice(i, 1);
-        }
-      }
-    } else {
-      throw new Error('Cannot pull on not array.');
-    }
-  }
-  return paths.length > 0;
-}
-MergeChange.prototype.operation$ꓺpull = function(source, params, separator = 'ꓺ') {
-  return MergeChange.prototype.operation$pull(source, params, separator);
-}
-
-/**
  * Operation: `$push`.
  *
  * @param source
@@ -513,6 +477,45 @@ MergeChange.prototype.operation$push = function (source, params, separator = '.'
 }
 MergeChange.prototype.operation$ꓺpush = function(source, params, separator = 'ꓺ') {
   return MergeChange.prototype.operation$push(source, params, separator);
+}
+
+/**
+ * Operation: `$pull`.
+ *
+ * @param source
+ * @param params
+ *
+ * @returns {boolean}
+ */
+MergeChange.prototype.operation$pull = function (source, params, separator = '.') {
+  if (source && typeof source[methods.toOperation] === 'function') {
+    source = source[methods.toOperation]();
+  } else if (source && typeof source.toJSON === 'function') {
+    source = source.toJSON();
+  }
+  const paths = Object.keys(params);
+
+  for (const path of paths) {
+    const array = utils.get(source, path, [], separator);
+    const conds = Array.isArray(params[path]) ? params[path] : [params[path]];
+
+    if (Array.isArray(array)) {
+      for (let i = array.length - 1; i >= 0; i--) {
+        for( cond of conds ) {
+          if (utils.equal(cond, array[i])) {
+            array.splice(i, 1);
+            break;
+          }
+        }
+      }
+    } else {
+      throw new Error('Cannot pull on not array.');
+    }
+  }
+  return paths.length > 0;
+}
+MergeChange.prototype.operation$ꓺpull = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$pull(source, params, separator);
 }
 
 /**
