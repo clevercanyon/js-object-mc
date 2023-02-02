@@ -3,7 +3,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"version": "1.8.41",
+	"version": "1.8.42",
 	"license": "MIT",
 	"name": "@clevercanyon/merge-change.fork",
 	"description": "Simple library for deep merge of objects.",

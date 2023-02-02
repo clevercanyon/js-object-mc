@@ -4,3 +4,5 @@ export function update(obj1:{[x:string|number]:unknown}, obj2:{[x:string|number]
 
 export function addOperation(name: string, callback: (current:{[x:string|number]:unknown}, defaults:{[x:string|number]:unknown}) => boolean):
 	 undefined | ((current:{[x:string|number]:unknown}, defaults:{[x:string|number]:unknown}) => boolean);
+
+// @todo Add all of the other typings.
