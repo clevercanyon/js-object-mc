@@ -7,18 +7,24 @@ This fork has been patched to resolve a [prototype pollution security issue](htt
 
 ## API
 
+Dropping in as a `merge-change` replacement.
+
+```json
+"dependencies": {
+	"merge-change": "npm:@clevercanyon/merge-change.fork@^1.0.0",
+}
+```
+
 ES Module `import` (recommended).
 
 ```js
-import mc from '@clevercanyon/merge-change.fork';
-// Additional utilities available as `mc.utils` or just `mc.u` in latest version.
+import mc from 'merge-change';
 ```
 
 CommonJS `require()`.
 
 ```js
-const mc = require('@clevercanyon/merge-change.fork');
-// Additional utilities available as `mc.utils` or just `mc.u` in latest version.
+const mc = require('merge-change');
 ```
 
 ### Merge
@@ -32,7 +38,7 @@ mc.merge(source, ...values);
 Example
 
 ```js
-import mc from '@clevercanyon/merge-change.fork';
+import mc from 'merge-change';
 
 // Create new object adding "a.three" and deleting "a.one".
 
@@ -533,21 +539,9 @@ mc.addOperation('$concat', previous);
 
 ## Utilities
 
-ES Module `import`.
+**Utilities:** Aliased as `mc.u` (recommended), but `mc.utils` continues to work also.
 
-```js
-import mc from '@clevercanyon/merge-change.fork';
-// Utilities available as `mc.utils` or just `mc.u` in latest version.
-```
-
-CommonJS `require()`.
-
-```js
-const mc = require('@clevercanyon/merge-change.fork');
-// Utilities available as `mc.utils` or just `mc.u` in latest version.
-```
-
-### `utils.diff(source, compare, {ignore = [], separator = '.'})`
+### `mc.u.diff(source, compare, {ignore = [], separator = '.'})`
 
 To calculate the difference between `source` and `compare` value.
 The return value is an object with `$set` and `$unset` operators. Return value can be used in merge functions.
@@ -578,7 +572,7 @@ const second = {
 	access: [700],
 };
 
-const diff = utils.diff(first, second, { ignore: ['secret'], separator: '/' });
+const diff = mc.u.diff(first, second, { ignore: ['secret'], separator: '/' });
 ```
 
 Result (diff)
@@ -598,27 +592,27 @@ Result (diff)
 }
 ```
 
-### `utils.type(value)`
+### `mc.u.type(value)`
 
 Get real type of any value. The return value is a string - the name of the constructor.
 
 ```js
-utils.type(null); // => 'Null'
-utils.type(true); // => 'Boolean'
-utils.type(new ObjectId()); // => 'ObjectID'
+mc.u.type(null); // => 'Null'
+mc.u.type(true); // => 'Boolean'
+mc.u.type(new ObjectId()); // => 'ObjectID'
 ```
 
-### `utils.instanceof(value, className)`
+### `mc.u.instanceof(value, className)`
 
 Checking instance of class. `className` is string (not constructor). The return value is a boolean.
 
 ```js
-utils.instanceof(100, 'Number'); // => true
-utils.instanceof(new MyClass(), 'MyClass'); // => true
-utils.instanceof(new MyClass(), 'Object'); // => true
+mc.u.instanceof(100, 'Number'); // => true
+mc.u.instanceof(new MyClass(), 'MyClass'); // => true
+mc.u.instanceof(new MyClass(), 'Object'); // => true
 ```
 
-### `utils.plain(value)`
+### `mc.u.plain(value)`
 
 Converting deep object values to plain types if value has plain representation. For example, all dates are converted to a string, but RegExp is not.
 To customize conversion, you can define the `[methods.toPlain]()` method in your object.
@@ -627,7 +621,7 @@ Nice for unit tests.
 > The method is similar to converting to JSON, only objects (arrays, functions...) are not converted to string representation.
 
 ```js
-const plain = utils.plain({
+const plain = mc.u.plain({
 	date: new Date('2021-01-07T19:10:21.759Z'),
 	prop: {
 		_id: new ObjectId('6010a8c75b9b393070e42e68'),
@@ -646,11 +640,9 @@ Result (plain).
 }
 ```
 
-### `utils.flat(value, path = '', separator = '.', clearUndefined = false)`
+### `mc.u.flatten(value, path = '', separator = '.', clearUndefined = false)`
 
-### `utils.flatten(value, path = '', separator = '.', clearUndefined = false)`
-
-Aliased as `flatten` (recommended). Converting a nested structure to a flat object. Property names become paths with `separator`. To customize conversion, you can define the `[methods.toFlat]()` method in your object.
+Aliased as `flatten` (recommended), but `mc.u.flat` continues to work also. Converting a nested structure to a flat object. Property names become paths with `separator`. To customize conversion, you can define the `[methods.toFlat]()` method in your object.
 
 ```js
 const value = {
@@ -660,7 +652,7 @@ const value = {
 		},
 	},
 };
-const flattened = utils.flatten(value, 'parent', '.');
+const flattened = mc.u.flatten(value, 'parent', '.');
 ```
 
 Result (flattened).
