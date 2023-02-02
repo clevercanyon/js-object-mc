@@ -410,7 +410,7 @@ MergeChange.prototype.operation$leave = function (source, params, separator = '.
       let subPath = '';
 
       if (typeof param === 'string') {
-        [name, subPath] = param.split('.');
+        [name, subPath] = param.split(separator);
       }
       if (!names[name]) {
         names[name] = [];
@@ -473,7 +473,7 @@ MergeChange.prototype.operation$pull = function (source, params, separator = '.'
         }
       }
     } else {
-      throw new Error('Cannot pull on not array');
+      throw new Error('Cannot pull on not array.');
     }
   }
   return paths.length > 0;
@@ -506,7 +506,7 @@ MergeChange.prototype.operation$push = function (source, params, separator = '.'
       array.push(value);
       utils.set(source, path, array, undefined, separator);
     } else {
-      throw new Error('Cannot push on not array');
+      throw new Error('Cannot push on not array.');
     }
   }
   return paths.length > 0;
@@ -539,7 +539,7 @@ MergeChange.prototype.operation$concat = function (source, params, separator = '
       array = array.concat(value);
       utils.set(source, path, array, undefined, separator);
     } else {
-      throw new Error('Cannot concat on not array');
+      throw new Error('Cannot concat on not array.');
     }
   }
   return paths.length > 0;

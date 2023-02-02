@@ -261,6 +261,36 @@ Result
  }
  ```
 
+### `$pull`, `$ꓺpull`
+
+To pull a value from an array property. The source property must be an array.
+
+ ```js
+ const result = mc.merge(
+   // First object
+   {
+     prop1: ['a', 'b', 'c', 'x'],
+     prop2: [1, 2, 3, 100],
+   },
+   // Merge
+   {
+     $pull: {
+       prop1: ['x'],
+       prop2: [100],
+     },
+   },
+ );
+ console.log(result);
+ ```
+
+Result
+ ```json
+ {
+   "prop1": ["a", "b", "c"],
+   "prop2": [1, 2, 3],
+ }
+ ```
+
 ### `$concat`, `$ꓺconcat`
 
 To concatenate arrays. The source property must be an array. The property in secondary arguments may not be an array.

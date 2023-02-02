@@ -53,7 +53,7 @@ const utilities = {
       if (path[1] === '*' && type !== 'Object' && type !== 'Array'){
         obj[currentPath] = undefined;
       } else {
-        return utilities.unset(obj[currentPath], path.slice(1));
+        return utilities.unset(obj[currentPath], path.slice(1), separator);
       }
     }
     return obj;
@@ -77,7 +77,7 @@ const utilities = {
     if (path.length === 0 || null === obj) {
       return obj; // Nothing to get or preserving `null`.
     }
-    return utilities.get(obj[path[0]], path.slice(1), defaultValue);
+    return utilities.get(obj[path[0]], path.slice(1), defaultValue, separator);
   },
 
   set: (obj, path, value, doNotReplace, separator = '.') => {
@@ -93,7 +93,7 @@ const utilities = {
       return obj; // Nothing to do.
     }
     if (!Array.isArray(path)) {
-      return utilities.set(obj, utilities.splitPath(path, separator), value, doNotReplace);
+      return utilities.set(obj, utilities.splitPath(path, separator), value, doNotReplace, separator);
     }
     const currentPath = path[0];
     const currentValue = obj[currentPath];
