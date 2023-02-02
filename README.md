@@ -205,7 +205,7 @@ Result
 To leave properties by name (or path). All other properties will be removed.
 
  ```js
- const result = mc(
+ const result = mc.merge(
    {
      a: {
        one: 1,
@@ -236,7 +236,7 @@ Result
 To push one value to the array property. The source property must be an array.
 
  ```js
- const result = mc(
+ const result = mc.merge(
    // First object
    {
      prop1: ['a', 'b'],
@@ -266,7 +266,7 @@ Result
 To concatenate arrays. The source property must be an array. The property in secondary arguments may not be an array.
 
  ```js
- const result = mc(
+ const result = mc.merge(
    // First object
    {
      prop1: ['a', 'b'],
@@ -296,7 +296,7 @@ Result
 To set default values. The source property must be an object.
 
  ```js
- const result = mc(
+ const result = mc.merge(
    // First object
    {
      prop1: ['a', 'b', 'c'],
@@ -352,7 +352,7 @@ Result
 Sorts object properties using order given. The source property must be an object.
 
  ```js
- const result = mc(
+ const result = mc.merge(
    // First object
    {
      prop3: {
@@ -360,6 +360,7 @@ Sorts object properties using order given. The source property must be an object
         d: 'd',
       },
       b: 'b',
+      e: undefined,
      },
      prop00: '00',
      prop1: ['a', 'b', 'c'],
@@ -370,12 +371,13 @@ Sorts object properties using order given. The source property must be an object
    {
      prop4: '4',
      $propSortOrder: [
-       'a',
+      'a',
       'prop0',
       'prop1',
       'prop2',
       'prop3.b',
       'prop3.c.d',
+      'prop3.e', // Undefined. Will not appear in sorted object.
       'prop4',
      ],
      prop0: '0',
