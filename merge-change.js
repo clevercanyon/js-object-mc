@@ -576,6 +576,41 @@ MergeChange.prototype.operation$ꓺdefault = function(source, params, separator 
 }
 
 /**
+ * Operation: `$propSortOrder`.
+ *
+ * @param source
+ * @param params
+ *
+ * @returns {boolean}
+ */
+MergeChange.prototype.operation$propSortOrder = function (source, params, separator = '.') {
+  if (source && typeof source[methods.toOperation] === 'function') {
+    source = source[methods.toOperation]();
+  } else if (source && typeof source.toJSON === 'function') {
+    source = source.toJSON();
+  }
+  const origSource = {...source};
+  const paths = Object.keys(params);
+
+  for (const [prop] of Object.entries(source)) {
+    delete source[prop]; // Start clean again.
+  }
+  for (const path of paths) {
+    const value = utils.get(origSource, path, undefined, separator);
+    if (undefined !== value) utils.set(source, path, value, undefined, separator);
+  }
+  for (const [path, value] of Object.entries(utils.flat(origSource, '', separator))) {
+    if (undefined !== value && undefined === utils.get(source, path, undefined, separator)) {
+      utils.set(source, path, value, undefined, separator);
+    }
+  }
+  return paths.length > 0;
+}
+MergeChange.prototype.operation$ꓺpropSortOrder = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$propSortOrder(source, params, separator);
+}
+
+/**
  * Add custom merge method.
  *
  * @param type1 {String} Type of source value.

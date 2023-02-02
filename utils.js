@@ -71,11 +71,11 @@ const utilities = {
     if (typeof path === 'number') {
       path = [path];
     }
-    if (typeof obj === 'undefined' || obj === null) {
+    if (typeof obj === 'undefined') {
       return defaultValue;
     }
-    if (path.length === 0) {
-      return obj;
+    if (path.length === 0 || null === obj) {
+      return obj; // Nothing to get or preserving `null`.
     }
     return utilities.get(obj[path[0]], path.slice(1), defaultValue);
   },
@@ -90,7 +90,7 @@ const utilities = {
       path = [path];
     }
     if (!path || !path.length) {
-      return obj;
+      return obj; // Nothing to do.
     }
     if (!Array.isArray(path)) {
       return utilities.set(obj, utilities.splitPath(path, separator), value, doNotReplace);
@@ -259,8 +259,6 @@ const utilities = {
       value = value[methods.toFlat]();
     } else if (value && typeof value.toJSON === 'function') {
       value = value.toJSON();
-    } else {
-      // value = value.valueOf();
     }
     if (utilities.type(value) === 'Object') {
       for (const [key, item] of Object.entries(value)) {

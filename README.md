@@ -114,7 +114,7 @@ console.log(result.a.sub === first.a.sub); // => true
 When merging objects, you can perform declarative operations at the same time.
 Supported in all merge methods. The syntax is similar to mongodb.
 
-### `$set`
+### `$set`, `$ꓺset`
 
 To set (or replace) property without deep merge.
 
@@ -148,7 +148,7 @@ Result
 }
 ```
 
-### `$unset`
+### `$unset`, `$ꓺunset`
 
 To unset properties by name (or path)
 
@@ -200,7 +200,7 @@ Result
  }
  ```
 
-### `$leave`
+### `$leave`, `$ꓺleave`
 
 To leave properties by name (or path). All other properties will be removed.
 
@@ -231,7 +231,7 @@ Result
  }
  ```
 
-### `$push`
+### `$push`, `$ꓺpush`
 
 To push one value to the array property. The source property must be an array.
 
@@ -261,7 +261,7 @@ Result
  }
  ```
 
-### `$concat`
+### `$concat`, `$ꓺconcat`
 
 To concatenate arrays. The source property must be an array. The property in secondary arguments may not be an array.
 
@@ -291,7 +291,7 @@ Result
  }
  ```
 
-### `$default`
+### `$default`, `$ꓺdefault`
 
 To set default values. The source property must be an object.
 
@@ -344,6 +344,62 @@ Result
       },
     "f": "default",
     "g": ["default"],
+ }
+ ```
+
+### `$propSortOrder`, `$ꓺpropSortOrder`
+
+Sorts object properties using order given. The source property must be an object.
+
+ ```js
+ const result = mc(
+   // First object
+   {
+     prop3: {
+      c: {
+        d: 'd',
+      },
+      b: 'b',
+     },
+     prop00: '00',
+     prop1: ['a', 'b', 'c'],
+     a: 'a',
+     prop2: ['a', 'b', 'c'],
+   },
+   // Merge
+   {
+     prop4: '4', // New property is merged prior to sorting.
+     $propSortOrder: [
+       'a',
+      'prop0', // This property does not exist yet, so not sorted.
+      'prop1',
+      'prop2',
+      'prop3.b',
+      'prop3.c.d',
+      'prop4', // New property exists now, so will be sorted here.
+     ],
+     prop0: '0',   // Did not exist when sorting, so comes after all existing others.
+     prop00: '00', // Existed when sorting, but not in sort order given, so comes after all others.
+   },
+ );
+ console.log(result);
+ ```
+
+Result
+ ```json
+ {
+    "a": "a",
+    "prop1": ["a", "b", "c"],
+    "prop2": ["a", "b", "c"],
+    "prop3": {
+      "b": "b",
+      "c": {
+        "d": "d",
+      },
+    },
+    "prop4": "4",
+    "prop00": "00",
+    "prop0": "0",
  }
  ```
 
@@ -400,7 +456,7 @@ For example, if sometimes need to union arrays, you can declare declarative oper
 ```js
 const previous = mc.addOperation('$concat', function(source, params){
   const paths = Object.keys(params);
-  
+
   for (const path of paths) {
     let value = params[path];
     let array = utils.get(source, path, []);
