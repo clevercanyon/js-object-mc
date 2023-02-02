@@ -368,18 +368,18 @@ Sorts object properties using order given. The source property must be an object
    },
    // Merge
    {
-     prop4: '4', // New property is merged prior to sorting.
+     prop4: '4',
      $propSortOrder: [
        'a',
-      'prop0', // This property does not exist yet, so not sorted.
+      'prop0',
       'prop1',
       'prop2',
       'prop3.b',
       'prop3.c.d',
-      'prop4', // New property exists now, so will be sorted here.
+      'prop4',
      ],
-     prop0: '0',   // Did not exist when sorting, so comes after all existing others.
-     prop00: '00', // Existed when sorting, but not in sort order given, so comes after all others.
+     prop0: '0',
+     prop00: '00', // Not in sort order given, so comes after all others.
    },
  );
  console.log(result);
@@ -389,6 +389,7 @@ Result
  ```json
  {
     "a": "a",
+    "prop0": "0",
     "prop1": ["a", "b", "c"],
     "prop2": ["a", "b", "c"],
     "prop3": {
@@ -399,7 +400,6 @@ Result
     },
     "prop4": "4",
     "prop00": "00",
-    "prop0": "0",
  }
  ```
 
