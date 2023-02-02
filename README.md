@@ -27,14 +27,14 @@ const mc = require('@clevercanyon/merge-change.fork');
 let first = {
   a: {
     one: true,
-    two: 2
-  }
+    two: 2,
+  },
 };
 let second = {
   a: {
     three: 3,
-    $unset: ['one'] // $unset is a declarative operations
-  }
+    $unset: ['one'], // $unset is a declarative operations
+  },
 };
 
 const result = mc.merge(first, second);
@@ -57,14 +57,14 @@ mc.patch(source, ...patches);
 let first = {
   a: {
     one: true,
-    two: 2
-  }
+    two: 2,
+  },
 };
 let second = {
   a: {
     three: 3,
-    $unset: ['one'] // $unset is a declarative operations
-  }
+    $unset: ['one'], // $unset is a declarative operations
+  },
 };
 
 const result = mc.patch(first, second); // => { a: { two: 2,  three: 3} }
@@ -88,15 +88,15 @@ let first = {
     one: true,
     two: 2,
     sub: {
-      value: 3
-    }
-  }
+      value: 3,
+    },
+  },
 };
 let second = {
   a: {
     three: 3,
-    $unset: ['one'] // $unset is a declarative operations
-  }
+    $unset: ['one'], // $unset is a declarative operation.
+  },
 };
 
 const result = mc.update(first, second); // => { a: { two: 2,  three: 3, sub: { value: 3 }} }
@@ -111,9 +111,8 @@ console.log(result.a.sub === first.a.sub); // => true
 
 ## Declarative Operations
 
-When merging objects, you can perform delete and replace properties at the same time.
-Use declarative operations in second or next arguments. Supported in all merge methods.
-The syntax is similar to mongodb.
+When merging objects, you can perform declarative operations at the same time.
+Supported in all merge methods. The syntax is similar to mongodb.
 
 ### `$set`
 
@@ -124,17 +123,17 @@ const result = mc.merge(
   {
     a: {
       one: 1,
-      two: 2
-    }
+      two: 2,
+    },
   },
   {
     $set: {
       a: {
-        three: 3
+        three: 3,
       },
-      'a.two': 20 // Fields keys can be path.
-    }
-  }
+      'a.two': 20, // Fields keys can be path.
+    },
+  },
 );
 console.log(result);
 ```
@@ -144,8 +143,8 @@ Result
 {
   "a": {
     "three": 3,
-    "two": 20
-  }
+    "two": 20,
+  },
 }
 ```
 
@@ -158,12 +157,12 @@ To unset properties by name (or path)
    {
      a: {
        one: 1,
-       two: 2
-     }
+       two: 2,
+     },
    },
    {
-     $unset: ['a.two']
-   }
+     $unset: ['a.two'],
+   },
  );
  console.log(result);
  ```
@@ -172,8 +171,8 @@ Result
  ```json
  {
    "a": {
-     "one": 1
-   }
+     "one": 1,
+   },
  }
  ```
 
@@ -184,12 +183,12 @@ Result
    {
      a: {
        one: 1,
-       two: 2
-     }
+       two: 2,
+     },
    },
    {
-     $unset: ['a.*']
-   }
+     $unset: ['a.*'],
+   },
  );
  console.log(result);
  ```
@@ -197,7 +196,7 @@ Result
 Result
  ```json
  {
-   "a": {}
+   "a": {},
  }
  ```
 
@@ -211,14 +210,14 @@ To leave properties by name (or path). All other properties will be removed.
      a: {
        one: 1,
        two: 2,
-       tree: 3
-     }
+       tree: 3,
+     },
    },
    {
      a: {
-       $leave: ['two']
-     }
-   }
+       $leave: ['two'],
+     },
+   },
  );
  console.log(result);
  ```
@@ -227,8 +226,8 @@ Result
 ```json
  {
    "a": {
-     "two": 2
-   }
+     "two": 2,
+   },
  }
  ```
 
@@ -247,9 +246,9 @@ To push one value to the array property. The source property must be an array.
    {
      $push: {
        prop1: ['c', 'd'],
-       prop2: {x: 'c'}
+       prop2: {x: 'c'},
      },
-   }
+   },
  );
  console.log(result);
  ```
@@ -258,7 +257,7 @@ Result
  ```json
  {
    "prop1": ["a", "b", ["c", "d"]],
-   "prop2": ["a", "b", {"x": "c"}]
+   "prop2": ["a", "b", {"x": "c"}],
  }
  ```
 
@@ -277,9 +276,9 @@ To concatenate arrays. The source property must be an array. The property in sec
    {
      $concat: {
        prop1: ['c', 'd'],
-       prop2: {x: 'c'}
+       prop2: {x: 'c'},
      },
-   }
+   },
  );
  console.log(result);
  ```
@@ -288,10 +287,65 @@ Result
  ```json
  {
    "prop1": ["a", "b", "c", "d"],
-   "prop2": ["a", "b", {"x": "c"}]
+   "prop2": ["a", "b", {"x": "c"}],
  }
  ```
 
+### `$default`
+
+To set default values. The source property must be an object.
+
+ ```js
+ const result = mc(
+   // First object
+   {
+     prop1: ['a', 'b', 'c'],
+     prop2: ['a', 'b', 'c'],
+     prop3: {
+      a: 'a',
+      b: 'b',
+      c: {
+        d: 'd',
+      },
+     },
+   },
+   // Merge
+   {
+     $default: {
+      prop1: ['default'],
+      prop2: ['default'],
+      prop3: {
+        a: 'default',
+        b: 'default',
+        c: {
+          d: 'default',
+          e: 'default',
+        },
+        f: 'default',
+        g: ['default'],
+      },
+     },
+   },
+ );
+ console.log(result);
+ ```
+
+Result
+ ```json
+ {
+    "prop1": ["a", "b", "c"],
+    "prop2": ["a", "b", "c"],
+    "prop3": {
+      "a": "a",
+      "b": "b",
+      "c": {
+        "d": "d",
+        "e": "default",
+      },
+    "f": "default",
+    "g": ["default"],
+ }
+ ```
 
 ## Customize Merge
 
@@ -346,9 +400,11 @@ For example, if sometimes need to union arrays, you can declare declarative oper
 ```js
 const previous = mc.addOperation('$concat', function(source, params){
   const paths = Object.keys(params);
+  
   for (const path of paths) {
     let value = params[path];
     let array = utils.get(source, path, []);
+
     if (Array.isArray(array)) {
       array = array.concat(value);
       utils.set(source, path, array);

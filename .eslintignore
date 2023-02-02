@@ -12,4 +12,9 @@
 # Customizations.
 # <custom:start>
 
+/index.js
+/utils.js
+/methods.js
+/merge-change.js
+
 # </custom:end>

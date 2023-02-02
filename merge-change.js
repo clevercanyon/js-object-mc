@@ -2,41 +2,47 @@ const utils = require('./utils.js');
 const methods = require('./methods.js');
 
 /**
- * Module will export single instance of MergeChange
- * @returns {MergeChange}
+ * Class.
+ *
  * @constructor
+ * @returns {MergeChange}
  */
 function MergeChange() {
   return this;
 }
 
 /**
- * Kinds of merge method
+ * Kinds of merges.
+ *
  * @type {{MERGE: string, UPDATE: string, PATCH: string}}
  */
 MergeChange.KINDS = {
-  MERGE: 'merge', // cloning
-  PATCH: 'patch', // change in source value
-  UPDATE: 'update' //immutable update (new value if there are diffs)
+  MERGE: 'merge',  // Deep clone.
+  PATCH: 'patch',  // Change in source value.
+  UPDATE: 'update' // Immutable update (new value if there are diffs).
 }
 MergeChange.prototype.KINDS = MergeChange.KINDS;
 
 /**
- * Factory method. Looks for suitable methods for type merging
- * Closure on merge kind to handle any number of values
- * @param kind {String} Kind of merge from KINDS
+ * Factory method. Looks for suitable methods for type merging.
+ * Closure on merge kind to handle any number of values.
+ *
+ * @param kind {String} Kind of merge from KINDS.
+ *
+ * @returns Closure.
  */
 MergeChange.prototype.prepareMerge = function (kind) {
   return (...values) => {
     return values.reduce((first, second) => {
         const firstType = utils.type(first);
         const secondType = utils.type(second);
+
         const actions = [
           `merge${firstType}${secondType}`,
           `merge${firstType}Any`,
           `mergeAny${secondType}`,
           `mergeAnyAny`,
-        ]
+        ];
         for (const action of actions) {
           if (this[action]) {
             return this[action](first, second, kind);
@@ -49,48 +55,47 @@ MergeChange.prototype.prepareMerge = function (kind) {
 }
 
 /**
- * Merge with cloning
- * Переданные значения не мутируются.
- * Можно использовать для клонирования.
+ * Merge with cloning.
+ *
  * @param first {*}
  * @param second {*}
  * @param more {...*}
+ *
  * @returns {*}
  */
 MergeChange.prototype.merge = MergeChange.prototype.prepareMerge(MergeChange.KINDS.MERGE);
 
 /**
- * Merging patches
- * Гарантируется сохранение ссылочных связей.
- * Происходит мутирование переданных значений кроме последнего.
+ * Merging patches.
+ *
  * @param first {*}
  * @param second {*}
  * @param more {...*}
+ *
  * @returns {*}
  */
 MergeChange.prototype.patch = MergeChange.prototype.prepareMerge(MergeChange.KINDS.PATCH);
 
 /**
- * Immutable merge
- * Если есть изменения, то возвращется новый объект. Если изменений нет, то возвращается базовый объект.
- * Правило работает на всех уровнях вложенности.
+ * Immutable merge.
+ *
  * @param first {*}
  * @param second {*}
  * @param more {...*}
+ *
  * @returns {*}
  */
 MergeChange.prototype.update = MergeChange.prototype.prepareMerge(MergeChange.KINDS.UPDATE);
 
 /**
- * Merge Any with Any
- * No merge required
- * @todo On kind "merge" we need cloning first argument?
- * По сути отсутсвие слияние, так как неизвестно как его делать.
- * Возвращается всегда новое значение взамен текущему.
- * В режиме MERGE значение нужно склонировать.
+ * Merge Any with Any.
+ *
+ * @todo On kind "merge" clone first argument?
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {*}
  */
 MergeChange.prototype.mergeAnyAny = function (first, second, kind) {
@@ -98,23 +103,14 @@ MergeChange.prototype.mergeAnyAny = function (first, second, kind) {
 }
 
 /**
- * Merge Any with plain object
- * @todo No merge required, but may need to do declarative operations?
+ * Merge Any with undefined.
+ *
+ * @todo On kind "merge" clone first argument?
+ *
  * @param first
  * @param second
  * @param kind
- * @returns {*}
- */
-// MergeChange.prototype.mergeAnyObject = function(first, second, kind){
-//   return this[kind](undefined, second);
-// }
-
-/**
- * Merge Any with undefined
- * @todo On kind "merge" we need cloning first argument.
- * @param first
- * @param second
- * @param kind
+ *
  * @returns {*}
  */
 MergeChange.prototype.mergeAnyUndefined = function (first, second, kind) {
@@ -123,13 +119,13 @@ MergeChange.prototype.mergeAnyUndefined = function (first, second, kind) {
 
 /**
  * Merge undefined with any types.
- * Always return second value
- * @todo On kind "merge" we need cloning second argument.
- * В режиме MERGE значение нужно клонировать, но так как нет конкретики про тип - клонирование не выполняется.
- * Для реализации режима MERGE нужно определять методы на конкретный тип .mergeUndefined<type>()
+ *
+ * @todo On kind "merge" clone second argument?
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {*}
  */
 MergeChange.prototype.mergeUndefinedAny = function (first, second, kind) {
@@ -137,11 +133,12 @@ MergeChange.prototype.mergeUndefinedAny = function (first, second, kind) {
 }
 
 /**
- * Merge undefined with Date
- * В режиме MERGE создаётся новый экземпляр даты
+ * Merge undefined with Date.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {Date}
  */
 MergeChange.prototype.mergeUndefinedDate = function (first, second, kind) {
@@ -149,11 +146,12 @@ MergeChange.prototype.mergeUndefinedDate = function (first, second, kind) {
 }
 
 /**
- * Merge undefined with Set
- * В режиме MERGE клонируется экземпляр Set
+ * Merge undefined with Set.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {Set}
  */
 MergeChange.prototype.mergeUndefinedSet = function (first, second, kind) {
@@ -161,11 +159,12 @@ MergeChange.prototype.mergeUndefinedSet = function (first, second, kind) {
 }
 
 /**
- * Merge undefined with Map
- * В режиме MERGE клонируется экземпляр Map
+ * Merge undefined with Map.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {Map}
  */
 MergeChange.prototype.mergeUndefinedMap = function (first, second, kind) {
@@ -173,11 +172,12 @@ MergeChange.prototype.mergeUndefinedMap = function (first, second, kind) {
 }
 
 /**
- * Merge undefined with WeekSet
- * В режиме MERGE клонируется экземпляр WeekSet
+ * Merge undefined with WeekSet.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {WeekSet}
  */
 MergeChange.prototype.mergeUndefinedWeekSet = function (first, second, kind) {
@@ -185,11 +185,12 @@ MergeChange.prototype.mergeUndefinedWeekSet = function (first, second, kind) {
 }
 
 /**
- * Merge undefined with WeekMap
- * В режиме MERGE клонируется экземпляр WeekMap
+ * Merge undefined with WeekMap.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {WeekMap}
  */
 MergeChange.prototype.mergeUndefinedWeekMap = function (first, second, kind) {
@@ -197,11 +198,12 @@ MergeChange.prototype.mergeUndefinedWeekMap = function (first, second, kind) {
 }
 
 /**
- * Merge undefined with array
- * В режиме MERGE клонируется экземпляр массима
+ * Merge undefined with array.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {Array}
  */
 MergeChange.prototype.mergeUndefinedArray = function (first, second, kind) {
@@ -209,12 +211,12 @@ MergeChange.prototype.mergeUndefinedArray = function (first, second, kind) {
 }
 
 /**
- * Merge undefined with plain object
- * Также выполняются операции, если они есть в second
- * В режиме MERGE клонируются экземпляр объекта
+ * Merge undefined with plain object.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {Object}
  */
 MergeChange.prototype.mergeUndefinedObject = function (first, second, kind) {
@@ -223,19 +225,23 @@ MergeChange.prototype.mergeUndefinedObject = function (first, second, kind) {
 }
 
 /**
- * Merge plain object with plain object
+ * Merge plain object with plain object.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {Object}
  */
 MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
   let result = kind === MergeChange.KINDS.PATCH ? first : {};
-  let resultField;
   let isChange = kind === MergeChange.KINDS.MERGE;
-  let operations = [];
+
   const keysFirst = Object.keys(first);
   const keysSecond = new Set(Object.keys(second));
+
+  let resultField, operations = [];
+
   for (const key of keysFirst) {
     if (key in second) {
       resultField = this[kind](first[key], second[key]);
@@ -246,7 +252,8 @@ MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
     isChange = isChange || resultField !== first[key];
     result[key] = resultField;
   }
-  // find declarative operations
+
+  // Declarative operations.
   for (const key of keysSecond) {
     if (this.isOperation(key)) {
       operations.push([key, second[key]]);
@@ -256,7 +263,8 @@ MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
       result[key] = resultField;
     }
   }
-  // execute declarative operations
+
+  // Execute declarative operations.
   for (const [operation, params] of operations) {
     isChange = this.operation(result, operation, params) || isChange;
   }
@@ -264,12 +272,15 @@ MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
 }
 
 /**
- * Merge array with array
- * Replace arrays - return second argument.
- * On kind "merge" we cloning second argument.
+ * Merge array with array.
+ *
+ * Replace arrays - returns second argument.
+ * On kind "merge" we clone second argument.
+ *
  * @param first
  * @param second
  * @param kind
+ *
  * @returns {Array}
  */
 MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
@@ -280,9 +291,11 @@ MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
 }
 
 /**
- * Checking if a declarative operation exists
+ * Checking if a declarative operation exists.
+ *
  * @param operation
  * @param [params]
+ *
  * @returns {boolean}
  */
 MergeChange.prototype.isOperation = function (operation, params) {
@@ -290,13 +303,16 @@ MergeChange.prototype.isOperation = function (operation, params) {
 }
 
 /**
- * Extract operations from object
+ * Extract operations from object.
+ *
  * @param object
+ *
  * @returns {Object}
  */
 MergeChange.prototype.extractOperations = function (object) {
   let result = {};
   const keys = Object.keys(object);
+
   for (const key of keys) {
     if (this.isOperation(key, object[key])) {
       result[key] = object[key];
@@ -307,59 +323,80 @@ MergeChange.prototype.extractOperations = function (object) {
 }
 
 /**
- * Execute declarative operation
+ * Execute declarative operation.
+ *
  * @param source
  * @param operation
  * @param params
+ *
  * @returns {*}
  */
 MergeChange.prototype.operation = function (source, operation, params) {
-  const method = `operation${operation}`;
-  if (this[method]) {
-    return this[method](source, params);
+  if (this[`operation${operation}`]) {
+    return this[`operation${operation}`](source, params);
   }
 }
 
 /**
- * $set
+ * Operation: `$set`.
+ *
  * @param source
- * @param params Объект со свойствами, которые нужно добавить без слияния. Ключи свойств могут быть путями с учётом вложенности
+ * @param params
+ *
  * @returns {boolean}
  */
-MergeChange.prototype.operation$set = function (source, params) {
+MergeChange.prototype.operation$set = function (source, params, separator = '.') {
+  if (source && typeof source[methods.toOperation] === 'function') {
+    source = source[methods.toOperation]();
+  } else if (source && typeof source.toJSON === 'function') {
+    source = source.toJSON();
+  }
   const fieldNames = Object.keys(params);
+
   for (const fieldName of fieldNames) {
-    utils.set(source, fieldName, params[fieldName]);
+    utils.set(source, fieldName, params[fieldName], undefined, separator);
   }
   return fieldNames.length > 0;
 }
+MergeChange.prototype.operation$ꓺset = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$set(source, params, separator);
+}
 
 /**
- * $unset
- * Удаление свойств объекта или элементов массива.
+ * Operation: `$unset`.
+ *
  * @param source
- * @param params Массив путей на удаляемые свойства. Учитывается вложенность
+ * @param params
+ *
  * @returns {boolean}
  */
-MergeChange.prototype.operation$unset = function (source, params) {
+MergeChange.prototype.operation$unset = function (source, params, separator = '.') {
   if (Array.isArray(params)) {
-    // Перечень полей для удаления
+    if (source && typeof source[methods.toOperation] === 'function') {
+      source = source[methods.toOperation]();
+    } else if (source && typeof source.toJSON === 'function') {
+      source = source.toJSON();
+    }
     for (const fieldName of params) {
-      utils.unset(source, fieldName);
+      utils.unset(source, fieldName, separator);
     }
     return params.length > 0;
   }
   return false;
 }
+MergeChange.prototype.operation$ꓺunset = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$unset(source, params, separator);
+}
 
 /**
- * $leave
- * Удаление всех свойств или элементов за исключением указанных
+ * Operation: `$leave`.
+ *
  * @param source
- * @param params Массив свойств, которые не надо удалять
+ * @param params
+ *
  * @returns {boolean}
  */
-MergeChange.prototype.operation$leave = function (source, params) {
+MergeChange.prototype.operation$leave = function (source, params, separator = '.') {
   if (Array.isArray(params)) {
     if (source && typeof source[methods.toOperation] === 'function') {
       source = source[methods.toOperation]();
@@ -367,9 +404,11 @@ MergeChange.prototype.operation$leave = function (source, params) {
       source = source.toJSON();
     }
     const names = {};
+
     for (const param of params) {
       let name = param;
       let subPath = '';
+
       if (typeof param === 'string') {
         [name, subPath] = param.split('.');
       }
@@ -381,13 +420,15 @@ MergeChange.prototype.operation$leave = function (source, params) {
       }
     }
     const type = utils.type(source);
+
     if (type === 'Object') {
       const keys = Object.keys(source);
+
       for (const key of keys) {
         if (!names[key]) {
           delete source[key];
         } else if (names[key].length > 0) {
-          this.operation$leave(source[key], names[key]);
+          this.operation$leave(source[key], names[key], separator);
         }
       }
     } else if (type === 'Array') {
@@ -401,24 +442,30 @@ MergeChange.prototype.operation$leave = function (source, params) {
   }
   return false;
 }
+MergeChange.prototype.operation$ꓺleave = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$leave(source, params, separator);
+}
 
 /**
- * $pull
- * Удаление элементов по равенству значения
+ * Operation: `$pull`.
+ *
  * @param source
  * @param params
+ *
  * @returns {boolean}
  */
-MergeChange.prototype.operation$pull = function (source, params) {
+MergeChange.prototype.operation$pull = function (source, params, separator = '.') {
   if (source && typeof source[methods.toOperation] === 'function') {
     source = source[methods.toOperation]();
   } else if (source && typeof source.toJSON === 'function') {
     source = source.toJSON();
   }
   const paths = Object.keys(params);
+
   for (const path of paths) {
     const cond = params[path];
-    const array = utils.get(source, path, []);
+    const array = utils.get(source, path, [], separator);
+
     if (Array.isArray(array)) {
       for (let i = array.length - 1; i >= 0; i--) {
         if (utils.equal(cond, array[i])) {
@@ -431,89 +478,136 @@ MergeChange.prototype.operation$pull = function (source, params) {
   }
   return paths.length > 0;
 }
+MergeChange.prototype.operation$ꓺpull = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$pull(source, params, separator);
+}
 
 /**
- * $push
- * Добавление элемента
+ * Operation: `$push`.
+ *
  * @param source
  * @param params
+ *
  * @returns {boolean}
  */
-MergeChange.prototype.operation$push = function (source, params) {
+MergeChange.prototype.operation$push = function (source, params, separator = '.') {
   if (source && typeof source[methods.toOperation] === 'function') {
     source = source[methods.toOperation]();
   } else if (source && typeof source.toJSON === 'function') {
     source = source.toJSON();
   }
   const paths = Object.keys(params);
+
   for (const path of paths) {
     const value = params[path];
-    const array = utils.get(source, path, []);
+    const array = utils.get(source, path, [], separator);
+
     if (Array.isArray(array)) {
       array.push(value);
-      utils.set(source, path, array);
+      utils.set(source, path, array, undefined, separator);
     } else {
       throw new Error('Cannot push on not array');
     }
   }
   return paths.length > 0;
 }
+MergeChange.prototype.operation$ꓺpush = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$push(source, params, separator);
+}
 
 /**
- * $concat
- * Слияние элементов массива
+ * Operation: `$concat`.
+ *
  * @param source
  * @param params
+ *
  * @returns {boolean}
  */
-MergeChange.prototype.operation$concat = function (source, params) {
+MergeChange.prototype.operation$concat = function (source, params, separator = '.') {
   if (source && typeof source[methods.toOperation] === 'function') {
     source = source[methods.toOperation]();
   } else if (source && typeof source.toJSON === 'function') {
     source = source.toJSON();
   }
   const paths = Object.keys(params);
+
   for (const path of paths) {
     let value = params[path];
-    let array = utils.get(source, path, []);
+    let array = utils.get(source, path, [], separator);
+
     if (Array.isArray(array)) {
       array = array.concat(value);
-      utils.set(source, path, array);
+      utils.set(source, path, array, undefined, separator);
     } else {
       throw new Error('Cannot concat on not array');
     }
   }
   return paths.length > 0;
 }
+MergeChange.prototype.operation$ꓺconcat = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$concat(source, params, separator);
+}
 
 /**
- * Add custom merge method
- * @param type1 {String} Type of source value
- * @param type2 {String} Type of secondary value
- * @param callback {Function} Merge function with argument: (first, second, kind)
- * @returns {*} The previous merge method
+ * Operation: `$default`.
+ *
+ * @param source
+ * @param params
+ *
+ * @returns {boolean}
+ */
+MergeChange.prototype.operation$default = function (source, params, separator = '.') {
+  if (source && typeof source[methods.toOperation] === 'function') {
+    source = source[methods.toOperation]();
+  } else if (source && typeof source.toJSON === 'function') {
+    source = source.toJSON();
+  }
+  const paths = Object.keys(params);
+
+  for (const path of paths) {
+    if (undefined === utils.get(source, path, undefined, separator)) {
+      utils.set(source, path, params[path], undefined, separator);
+    }
+  }
+  return paths.length > 0;
+}
+MergeChange.prototype.operation$ꓺdefault = function(source, params, separator = 'ꓺ') {
+  return MergeChange.prototype.operation$default(source, params, separator);
+}
+
+/**
+ * Add custom merge method.
+ *
+ * @param type1 {String} Type of source value.
+ * @param type2 {String} Type of secondary value.
+ * @param callback {Function} Merge function with argument: (first, second, kind).
+ *
+ * @returns {*} The previous merge method with name `merge${type1}${type2}`.
  */
 MergeChange.prototype.addMerge = function (type1, type2, callback) {
-  const method = `merge${type1}${type2}`;
-  const current = MergeChange.prototype[method];
-  MergeChange.prototype[method] = callback;
-  return current
+  const previous = MergeChange.prototype[`merge${type1}${type2}`];
+  MergeChange.prototype[`merge${type1}${type2}`] = callback;
+  return previous;
 }
 
 /**
- * Add custom declarative operation
- * @param name {String} Operation name
- * @param callback {Function} Operation function with argument: (source, params)
- * @returns {*} The previous operation method
+ * Add custom declarative operation.
+ *
+ * @param name {String} Operation name.
+ * @param callback {Function} Operation: (source, params) => boolean.
+ *
+ * @returns {*} The previous operation method with `$name`.
  */
 MergeChange.prototype.addOperation = function (name, callback) {
-  if (name.substr(0, 1) !== '$') {
+  if (!name.startsWith('$')) {
     name = '$' + name;
   }
-  const method = `operation${name}`;
-  const current = MergeChange.prototype[method];
-  MergeChange.prototype[method] = callback;
-  return current
+  const previous = MergeChange.prototype[`operation${name}`];
+  MergeChange.prototype[`operation${name}`] = callback;
+  return previous;
 }
 
+/**
+ * Module exports.
+ */
 module.exports = new MergeChange();
