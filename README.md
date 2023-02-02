@@ -615,7 +615,7 @@ mc.u.instanceof(new MyClass(), 'Object'); // => true
 ### `mc.u.plain(value)`
 
 Converting deep object values to plain types if value has plain representation. For example, all dates are converted to a string, but RegExp is not.
-To customize conversion, you can define the `[methods.toPlain]()` method in your object.
+To customize conversion, you can define the `[mc.methods.toPlain]()` method in your object.
 Nice for unit tests.
 
 > The method is similar to converting to JSON, only objects (arrays, functions...) are not converted to string representation.
@@ -642,7 +642,7 @@ Result (plain).
 
 ### `mc.u.flatten(value, path = '', separator = '.', clearUndefined = false)`
 
-Aliased as `flatten` (recommended), but `mc.u.flat` continues to work also. Converting a nested structure to a flat object. Property names become paths with `separator`. To customize conversion, you can define the `[methods.toFlat]()` method in your object.
+Aliased as `flatten` (recommended), but `mc.u.flat` continues to work also. Converting a nested structure to a flat object. Property names become paths with `separator`. To customize conversion, you can define the `[mc.methods.toFlat]()` method in your object.
 
 ```js
 const value = {
