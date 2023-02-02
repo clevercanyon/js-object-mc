@@ -341,20 +341,16 @@ To set default values. The source property must be an object.
    },
    // Merge
    {
-     $default: {
-      prop1: ['default'],
-      prop2: ['default'],
-      prop3: {
-        a: 'default',
-        b: 'default',
-        c: {
-          d: 'default',
-          e: 'default',
-        },
-        f: 'default',
-        g: ['default'],
+      $default: {
+        'prop1': ['default'],
+        'prop2': ['default'],
+        'prop3.a': 'default',
+        'prop3.b': 'default',
+        'prop3.c.d': 'default',
+        'prop3.c.e': 'default',
+        'prop3.f': 'default',
+        'prop3.g': ['default'],
       },
-     },
    },
  );
  console.log(result);
