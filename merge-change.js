@@ -1,3 +1,6 @@
+/**
+ * Imports.
+ */
 const utils = require('./utils.js');
 const methods = require('./methods.js');
 
@@ -8,16 +11,8 @@ const methods = require('./methods.js');
  * @returns {MergeChange}
  */
 function MergeChange() {
-  return this; // Picks up `utils`, `methods`.
+  return this;
 }
-
-/**
- * Utilities.
- *
- * @type {object}
- */
-MergeChange.u = utils; // Static.
-MergeChange.prototype.u = MergeChange.u;
 
 /**
  * Kinds of merges.

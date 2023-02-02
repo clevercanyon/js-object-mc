@@ -1,4 +1,7 @@
-const methods = require('./methods');
+/**
+ * Imports.
+ */
+const methods = require('./methods.js');
 
 /**
  * Utilities.
