@@ -59,6 +59,17 @@ const u = {
 	},
 
 	/**
+	 * {@see u.set()} with `keepExisting=true`.
+	 *
+	 * @note {@see u.set()} for further details regarding parameters.
+	 *
+	 * @returns {object} Revised end-of-path object.
+	 */
+	setDefault: (obj, path, value, separator = '.') => {
+		return u.set(obj, path, value, true, separator);
+	},
+
+	/**
 	 * Set a property in an object.
 	 *
 	 * @param obj {object} Object to set property in.
@@ -115,17 +126,6 @@ const u = {
 			obj[currentPath] = {};
 		}
 		return u.set(obj[currentPath], path.slice(1), value, keepExisting, separator);
-	},
-
-	/**
-	 * {@see u.set()} with `keepExisting=true`.
-	 *
-	 * @note {@see u.set()} for further details regarding parameters.
-	 *
-	 * @returns {object} Revised end-of-path object.
-	 */
-	setDefault: (obj, path, value, separator = '.') => {
-		return u.set(obj, path, value, true, separator);
 	},
 
 	/**
@@ -193,6 +193,39 @@ const u = {
 			}
 		}
 		return obj;
+	},
+
+	/**
+	 * Flattens a value into string paths with a single dimension.
+	 *
+	 * @param value {*} Value to flatten.
+	 * @param path {string} Leading path to use as a prefix. Default is ``.
+	 * @param separator {string} Separator used in string path notation. Default is `.`.
+	 * @param clearUndefined {boolean} Clear undefined values? Default is `false`.
+	 * @param result {*} For private internal recursive use only.
+	 *
+	 * @returns {*} Flattened value.
+	 */
+	flatten: (value, path = '', separator = '.', clearUndefined = false, result = {}) => {
+		if (value && typeof value === 'object') {
+			if (typeof value[methods.toFlat] === 'function') {
+				value = value[methods.toFlat]();
+			} else if (typeof value.toJSON === 'function') {
+				value = value.toJSON();
+			}
+		}
+		if (u.type(value) === 'Object') {
+			for (const [key, item] of Object.entries(value)) {
+				u.flatten(item, path ? `${path}${separator}${key}` : key, separator, clearUndefined, result);
+			}
+		} else if (typeof value !== 'undefined' || !clearUndefined) {
+			if ('' === path) {
+				result = value;
+			} else {
+				result[path] = value;
+			}
+		}
+		return result;
 	},
 
 	/**
@@ -293,39 +326,6 @@ const u = {
 			}
 		}
 		return value;
-	},
-
-	/**
-	 * Flattens a value into string paths with a single dimension.
-	 *
-	 * @param value {*} Value to flatten.
-	 * @param path {string} Leading path to use as a prefix. Default is ``.
-	 * @param separator {string} Separator used in string path notation. Default is `.`.
-	 * @param clearUndefined {boolean} Clear undefined values? Default is `false`.
-	 * @param result {*} For private internal recursive use only.
-	 *
-	 * @returns {*} Flattened value.
-	 */
-	flatten: (value, path = '', separator = '.', clearUndefined = false, result = {}) => {
-		if (value && typeof value === 'object') {
-			if (typeof value[methods.toFlat] === 'function') {
-				value = value[methods.toFlat]();
-			} else if (typeof value.toJSON === 'function') {
-				value = value.toJSON();
-			}
-		}
-		if (u.type(value) === 'Object') {
-			for (const [key, item] of Object.entries(value)) {
-				u.flatten(item, path ? `${path}${separator}${key}` : key, separator, clearUndefined, result);
-			}
-		} else if (typeof value !== 'undefined' || !clearUndefined) {
-			if ('' === path) {
-				result = value;
-			} else {
-				result[path] = value;
-			}
-		}
-		return result;
 	},
 
 	/**
