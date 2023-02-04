@@ -1,8 +1,8 @@
 /**
  * Imports.
  */
-const utils = require('./utils.js');
 const methods = require('./methods.js');
+const u = require('./utilities.js');
 
 /**
  * Class.
@@ -11,11 +11,11 @@ const methods = require('./methods.js');
  * @returns {MergeChange}
  */
 function MergeChange() {
-  return this;
+  return this; // Class instance.
 }
 
 /**
- * Kinds of merges.
+ * Kinds.
  *
  * @type {object}
  */
@@ -25,6 +25,22 @@ MergeChange.KINDS = {
   UPDATE: 'update' // Immutable update (new value if there are diffs).
 }
 MergeChange.prototype.KINDS = MergeChange.KINDS;
+
+/**
+ * Methods.
+ *
+ * @type {object}
+ */
+MergeChange.methods = methods;
+MergeChange.prototype.methods = MergeChange.methods;
+
+/**
+ * Utilities.
+ *
+ * @type {object}
+ */
+MergeChange.u = MergeChange.utils = MergeChange.utilities = u;
+MergeChange.prototype.u = MergeChange.prototype.utils = MergeChange.prototype.utilities = MergeChange.u;
 
 /**
  * Factory method. Looks for suitable methods for type merging.
@@ -37,8 +53,8 @@ MergeChange.prototype.KINDS = MergeChange.KINDS;
 MergeChange.prototype.prepareMerge = function (kind) {
   return (...values) => {
     return values.reduce((first, second) => {
-        const firstType = utils.type(first);
-        const secondType = utils.type(second);
+        const firstType = u.type(first);
+        const secondType = u.type(second);
 
         const actions = [
           `merge${firstType}${secondType}`,
@@ -349,17 +365,26 @@ MergeChange.prototype.operation = function (source, operation, params) {
  * @returns {boolean}
  */
 MergeChange.prototype.operation$set = function (source, params, separator = '.') {
-  if (source && typeof source[methods.toOperation] === 'function') {
-    source = source[methods.toOperation]();
-  } else if (source && typeof source.toJSON === 'function') {
-    source = source.toJSON();
+  if(!source || typeof source !== 'object') {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'set. Requires an object source.');
   }
-  const fieldNames = Object.keys(params);
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'set params. Expecting non-array object.');
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source[methods.toOperation] === 'function') {
+      source = source[methods.toOperation]();
+    } else if (typeof source.toJSON === 'function') {
+      source = source.toJSON();
+    }
+  }
+  const values = params;
+  const paths = Object.keys(values);
 
-  for (const fieldName of fieldNames) {
-    utils.set(source, fieldName, params[fieldName], undefined, separator);
+  for (const path of paths) {
+    u.set(source, path, values[path], separator);
   }
-  return fieldNames.length > 0;
+  return paths.length > 0;
 }
 MergeChange.prototype.operation$ꓺset = function(source, params, separator = 'ꓺ') {
   return MergeChange.prototype.operation$set(source, params, separator);
@@ -374,18 +399,25 @@ MergeChange.prototype.operation$ꓺset = function(source, params, separator = '�
  * @returns {boolean}
  */
 MergeChange.prototype.operation$unset = function (source, params, separator = '.') {
-  if (Array.isArray(params)) {
-    if (source && typeof source[methods.toOperation] === 'function') {
+  if(!source || typeof source !== 'object') {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'unset. Requires an object source.');
+  }
+  if (!params || !Array.isArray(params)) {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'unset params. Expecting array.');
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source[methods.toOperation] === 'function') {
       source = source[methods.toOperation]();
-    } else if (source && typeof source.toJSON === 'function') {
+    } else if (typeof source.toJSON === 'function') {
       source = source.toJSON();
     }
-    for (const fieldName of params) {
-      utils.unset(source, fieldName, separator);
-    }
-    return params.length > 0;
   }
-  return false;
+  const paths = params;
+
+  for (const path of paths) {
+    u.unset(source, path, separator);
+  }
+  return paths.length > 0;
 }
 MergeChange.prototype.operation$ꓺunset = function(source, params, separator = 'ꓺ') {
   return MergeChange.prototype.operation$unset(source, params, separator);
@@ -400,50 +432,52 @@ MergeChange.prototype.operation$ꓺunset = function(source, params, separator = 
  * @returns {boolean}
  */
 MergeChange.prototype.operation$leave = function (source, params, separator = '.') {
-  if (Array.isArray(params)) {
-    if (source && typeof source[methods.toOperation] === 'function') {
+  if(!source || typeof source !== 'object') {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'leave. Requires an object source.');
+  }
+  if (!params || !Array.isArray(params)) {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'leave params. Expecting array.');
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source[methods.toOperation] === 'function') {
       source = source[methods.toOperation]();
-    } else if (source && typeof source.toJSON === 'function') {
+    } else if (typeof source.toJSON === 'function') {
       source = source.toJSON();
     }
-    const names = {};
-
-    for (const param of params) {
-      let name = param;
-      let subPath = '';
-
-      if (typeof param === 'string') {
-        [name, subPath] = param.split(separator);
-      }
-      if (!names[name]) {
-        names[name] = [];
-      }
-      if (subPath) {
-        names[name].push(subPath);
-      }
-    }
-    const type = utils.type(source);
-
-    if (type === 'Object') {
-      const keys = Object.keys(source);
-
-      for (const key of keys) {
-        if (!names[key]) {
-          delete source[key];
-        } else if (names[key].length > 0) {
-          this.operation$leave(source[key], names[key], separator);
-        }
-      }
-    } else if (type === 'Array') {
-      for (let key = source.length - 1; key >= 0; key--) {
-        if (!(key in names)) {
-          source.splice(key, 1);
-        }
-      }
-    }
-    return params.length > 0;
   }
-  return false;
+  const leadingPaths = {};
+  const paths = params;
+
+  for (const path of paths) {
+    let leadingPath = path;
+    let subPath = ''; // Initialize.
+
+    if (typeof path === 'string') {
+      [leadingPath, subPath] = path.split(separator);
+    }
+    if (!(leadingPath in leadingPaths)) {
+      leadingPaths[leadingPath] = [];
+    }
+    if (subPath) {
+      leadingPaths[leadingPath].push(subPath);
+    }
+  }
+  const type = u.type(source);
+
+  if (type === 'Object') {
+    for (const prop of Object.keys(source)) {
+      if (!(prop in leadingPaths)) {
+        delete source[prop];
+      } else if (leadingPaths[prop].length > 0 && source[prop] && typeof source[prop] === 'object') {
+        this.operation$leave(source[prop], leadingPaths[prop], separator);
+      }
+    }
+  } else if (type === 'Array') {
+    for (let i = source.length - 1; i >= 0; i--) {
+      if (!(i in leadingPaths)) source.splice(i, 1);
+    }
+  }
+  return paths.length > 0;
 }
 MergeChange.prototype.operation$ꓺleave = function(source, params, separator = 'ꓺ') {
   return MergeChange.prototype.operation$leave(source, params, separator);
@@ -458,23 +492,31 @@ MergeChange.prototype.operation$ꓺleave = function(source, params, separator = 
  * @returns {boolean}
  */
 MergeChange.prototype.operation$push = function (source, params, separator = '.') {
-  if (source && typeof source[methods.toOperation] === 'function') {
-    source = source[methods.toOperation]();
-  } else if (source && typeof source.toJSON === 'function') {
-    source = source.toJSON();
+  if(!source || typeof source !== 'object') {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'push. Requires an object source.');
   }
-  const paths = Object.keys(params);
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'push params. Expecting non-array object.');
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source[methods.toOperation] === 'function') {
+      source = source[methods.toOperation]();
+    } else if (typeof source.toJSON === 'function') {
+      source = source.toJSON();
+    }
+  }
+  const values = params;
+  const paths = Object.keys(values);
 
   for (const path of paths) {
-    const value = params[path];
-    const array = utils.get(source, path, [], separator);
+    const value = values[path];
+    const array = u.get(source, path, [], separator);
 
-    if (Array.isArray(array)) {
-      array.push(value);
-      utils.set(source, path, array, undefined, separator);
-    } else {
-      throw new Error('Cannot push on not array.');
+    if (!Array.isArray(array)) {
+      throw new Error('Cannot push onto non-array value.');
     }
+    array.push(value); // Onto stack.
+    u.set(source, path, array, separator);
   }
   return paths.length > 0;
 }
@@ -491,28 +533,36 @@ MergeChange.prototype.operation$ꓺpush = function(source, params, separator = '
  * @returns {boolean}
  */
 MergeChange.prototype.operation$pull = function (source, params, separator = '.') {
-  if (source && typeof source[methods.toOperation] === 'function') {
-    source = source[methods.toOperation]();
-  } else if (source && typeof source.toJSON === 'function') {
-    source = source.toJSON();
+  if(!source || typeof source !== 'object') {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'pull. Requires an object source.');
   }
-  const paths = Object.keys(params);
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'pull params. Expecting non-array object.');
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source[methods.toOperation] === 'function') {
+      source = source[methods.toOperation]();
+    } else if (typeof source.toJSON === 'function') {
+      source = source.toJSON();
+    }
+  }
+  const values = params;
+  const paths = Object.keys(values);
 
   for (const path of paths) {
-    const array = utils.get(source, path, [], separator);
-    const conds = Array.isArray(params[path]) ? params[path] : [params[path]];
+    const array = u.get(source, path, [], separator);
+    const pullValues = Array.isArray(values[path]) ? values[path] : [values[path]];
 
-    if (Array.isArray(array)) {
-      for (let i = array.length - 1; i >= 0; i--) {
-        for(cond of conds) {
-          if (utils.equal(cond, array[i])) {
-            array.splice(i, 1);
-            break;
-          }
+    if (!Array.isArray(array)) {
+      throw new Error('Cannot pull from non-array value.');
+    }
+    for (let i = array.length - 1; i >= 0; i--) {
+      for(pullValue of pullValues) {
+        if (u.equals(pullValue, array[i])) {
+          array.splice(i, 1);
+          break;
         }
       }
-    } else {
-      throw new Error('Cannot pull on not array.');
     }
   }
   return paths.length > 0;
@@ -530,23 +580,31 @@ MergeChange.prototype.operation$ꓺpull = function(source, params, separator = '
  * @returns {boolean}
  */
 MergeChange.prototype.operation$concat = function (source, params, separator = '.') {
-  if (source && typeof source[methods.toOperation] === 'function') {
-    source = source[methods.toOperation]();
-  } else if (source && typeof source.toJSON === 'function') {
-    source = source.toJSON();
+  if(!source || typeof source !== 'object') {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'concat. Requires an object source.');
   }
-  const paths = Object.keys(params);
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'concat params. Expecting non-array object.');
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source[methods.toOperation] === 'function') {
+      source = source[methods.toOperation]();
+    } else if (typeof source.toJSON === 'function') {
+      source = source.toJSON();
+    }
+  }
+  const values = params;
+  const paths = Object.keys(values);
 
   for (const path of paths) {
-    let value = params[path];
-    let array = utils.get(source, path, [], separator);
+    let value = values[path];
+    let array = u.get(source, path, [], separator);
 
-    if (Array.isArray(array)) {
-      array = array.concat(value);
-      utils.set(source, path, array, undefined, separator);
-    } else {
-      throw new Error('Cannot concat on not array.');
+    if (!Array.isArray(array)) {
+      throw new Error('Cannot concat onto non-array value.');
     }
+    array = array.concat(value);
+    u.set(source, path, array, separator);
   }
   return paths.length > 0;
 }
@@ -563,16 +621,25 @@ MergeChange.prototype.operation$ꓺconcat = function(source, params, separator =
  * @returns {boolean}
  */
 MergeChange.prototype.operation$default = function (source, params, separator = '.') {
-  if (source && typeof source[methods.toOperation] === 'function') {
-    source = source[methods.toOperation]();
-  } else if (source && typeof source.toJSON === 'function') {
-    source = source.toJSON();
+  if(!source || typeof source !== 'object') {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'default. Requires an object source.');
   }
-  const paths = Object.keys(params);
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'default params. Expecting non-array object.');
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source[methods.toOperation] === 'function') {
+      source = source[methods.toOperation]();
+    } else if (typeof source.toJSON === 'function') {
+      source = source.toJSON();
+    }
+  }
+  const values = params;
+  const paths = Object.keys(values);
 
   for (const path of paths) {
-    if (undefined === utils.get(source, path, undefined, separator)) {
-      utils.set(source, path, params[path], undefined, separator);
+    if (undefined === u.get(source, path, undefined, separator)) {
+      u.set(source, path, values[path], separator);
     }
   }
   return paths.length > 0;
@@ -590,30 +657,35 @@ MergeChange.prototype.operation$ꓺdefault = function(source, params, separator 
  * @returns {boolean}
  */
 MergeChange.prototype.operation$propSortOrder = function (source, params, separator = '.') {
-  if (Array.isArray(params)) {
-    if (source && typeof source[methods.toOperation] === 'function') {
+  if(u.type(source) !== 'Object') {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'propSortOrder. Requires a plain object source.');
+  }
+  if (!params || !Array.isArray(params)) {
+    throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'propSortOrder params. Expecting array.');
+  }
+  if (source && typeof source === 'object') {
+    if (typeof source[methods.toOperation] === 'function') {
       source = source[methods.toOperation]();
-    } else if (source && typeof source.toJSON === 'function') {
+    } else if (typeof source.toJSON === 'function') {
       source = source.toJSON();
     }
-    const paths = params;
-    const origSource = {...source};
-
-    for (const [prop] of Object.entries(source)) {
-      delete source[prop]; // Start clean again.
-    }
-    for (const path of paths) {
-      const value = utils.get(origSource, path, undefined, separator);
-      if (undefined !== value) utils.set(source, path, value, undefined, separator);
-    }
-    for (const [path, value] of Object.entries(utils.flat(origSource, '', separator))) {
-      if (undefined !== value && undefined === utils.get(source, path, undefined, separator)) {
-        utils.set(source, path, value, undefined, separator);
-      }
-    }
-    return paths.length > 0;
   }
-  return false;
+  const paths = params;
+  const origSource = {...source};
+
+  for (const [prop] of Object.entries(source)) {
+    delete source[prop]; // Start clean again.
+  }
+  for (const path of paths) {
+    const value = u.get(origSource, path, undefined, separator);
+    if (undefined !== value) u.set(source, path, value, separator);
+  }
+  for (const [path, value] of Object.entries(u.flatten(origSource, '', separator))) {
+    if (undefined !== value && undefined === u.get(source, path, undefined, separator)) {
+      u.set(source, path, value, separator);
+    }
+  }
+  return paths.length > 0;
 }
 MergeChange.prototype.operation$ꓺpropSortOrder = function(source, params, separator = 'ꓺ') {
   return MergeChange.prototype.operation$propSortOrder(source, params, separator);
@@ -638,7 +710,7 @@ MergeChange.prototype.addMerge = function (type1, type2, callback) {
  * Add custom declarative operation.
  *
  * @param name {String} Operation name.
- * @param callback {Function} Operation: (source, params) => boolean.
+ * @param callback {Function} Operation: (source, params, separator) => boolean.
  *
  * @returns {*} The previous operation method with `$name`.
  */

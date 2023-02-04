@@ -13,8 +13,8 @@
 # <custom:start>
 
 /index.js
-/utils.js
 /methods.js
+/utilities.js
 /merge-change.js
 
 # </custom:end>

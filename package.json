@@ -3,7 +3,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"version": "1.8.46",
+	"version": "1.8.47",
 	"license": "MIT",
 	"name": "@clevercanyon/merge-change.fork",
 	"description": "Simple library for deep merge of objects.",
@@ -23,7 +23,7 @@
 		}
 	],
 	"type": "commonjs",
-	"files": ["/index.js", "/index.d.ts", "/merge-change.js", "/methods.js", "/utils.js"],
+	"files": ["/index.js", "/index.d.ts", "/merge-change.js", "/methods.js", "/utilities.js"],
 	"bin": {},
 	"imports": {},
 	"exports": null,
@@ -40,7 +40,7 @@
 	"optionalDependencies": {},
 	"bundleDependencies": [],
 	"devDependencies": {
-		"@clevercanyon/skeleton-dev-deps": "^1.0.118"
+		"@clevercanyon/skeleton-dev-deps": "^1.0.119"
 	},
 	"overrides": {},
 	"workspaces": [],

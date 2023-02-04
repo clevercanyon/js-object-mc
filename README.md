@@ -543,9 +543,7 @@ mc.addOperation('$concat', previous);
 
 ### `mc.u.diff(source, compare, {ignore = [], separator = '.'})`
 
-To calculate the difference between `source` and `compare` value.
-The return value is an object with `$set` and `$unset` operators. Return value can be used in merge functions.
-The `ignore` parameter - is a list of properties that are not included in the comparison.
+To calculate the difference between `source` and `compare` value. The return value is an object with `$set` and `$unset` operators. Return value can be used in merge functions. The `ignore` parameter - is a list of properties that are not included in the comparison.
 
 ```js
 const first = {
@@ -577,7 +575,7 @@ const diff = mc.u.diff(first, second, { ignore: ['secret'], separator: '/' });
 
 Result (diff)
 
-```
+```js
 {
   $set: {
     'login': 'value',
@@ -631,7 +629,7 @@ const plain = mc.u.plain({
 
 Result (plain).
 
-```
+```js
 {
   date: '2021-01-07T19:10:21.759Z',
   prop: {
@@ -657,7 +655,7 @@ const flattened = mc.u.flatten(value, 'parent', '.');
 
 Result (flattened).
 
-```
+```js
 {
   'parent.a.b.c': 100
 }
