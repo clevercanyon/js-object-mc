@@ -5,9 +5,8 @@ const methods = require('./methods.js');
 const u = require('./utilities.js');
 
 /**
- * Class.
+ * Class constructor.
  *
- * @constructor
  * @returns {MergeChange}
  */
 function MergeChange() {
@@ -15,9 +14,9 @@ function MergeChange() {
 }
 
 /**
- * Kinds.
+ * Defines merge kinds.
  *
- * @type {object}
+ * @type {Object}
  */
 MergeChange.KINDS = {
   MERGE: 'merge',  // Deep clone.
@@ -27,17 +26,17 @@ MergeChange.KINDS = {
 MergeChange.prototype.KINDS = MergeChange.KINDS;
 
 /**
- * Methods.
+ * Defines special method symbols.
  *
- * @type {object}
+ * @type {Object}
  */
 MergeChange.methods = methods;
 MergeChange.prototype.methods = MergeChange.methods;
 
 /**
- * Utilities.
+ * Defines merge-change utilities.
  *
- * @type {object}
+ * @type {Object}
  */
 MergeChange.u = MergeChange.utils = MergeChange.utilities = u;
 MergeChange.prototype.u = MergeChange.prototype.utils = MergeChange.prototype.utilities = MergeChange.u;
@@ -46,9 +45,9 @@ MergeChange.prototype.u = MergeChange.prototype.utils = MergeChange.prototype.ut
  * Factory method. Looks for suitable methods for type merging.
  * Closure on merge kind to handle any number of values.
  *
- * @param kind {String} Kind of merge from KINDS.
+ * @param {String} kind Kind of merge from KINDS.
  *
- * @returns Closure.
+ * @returns {Function}
  */
 MergeChange.prototype.prepareMerge = function (kind) {
   return (...values) => {
@@ -63,72 +62,220 @@ MergeChange.prototype.prepareMerge = function (kind) {
           `mergeAnyAny`,
         ];
         for (const action of actions) {
-          if (this[action]) {
+          if (this[action]) // Action exists?
             return this[action](first, second, kind);
-          }
         }
-        return first;
+        throw new Error('Unsupported merge types.');
       }
     );
   }
 }
 
 /**
- * Merge with cloning.
+ * Performs a deep clone merge.
  *
- * @param first {*}
- * @param second {*}
- * @param more {...*}
+ * @param {*} first
+ * @param {*} second
+ * @param {...*} more
  *
  * @returns {*}
  */
 MergeChange.prototype.merge = MergeChange.prototype.prepareMerge(MergeChange.KINDS.MERGE);
 
 /**
- * Merging patches.
+ * Performs a patch merge.
  *
- * @param first {*}
- * @param second {*}
- * @param more {...*}
+ * @param {*} first
+ * @param {*} second
+ * @param {...*} more
  *
  * @returns {*}
  */
 MergeChange.prototype.patch = MergeChange.prototype.prepareMerge(MergeChange.KINDS.PATCH);
 
 /**
- * Immutable merge.
+ * Performs an immutable merge.
  *
- * @param first {*}
- * @param second {*}
- * @param more {...*}
+ * @param {*} first
+ * @param {*} second
+ * @param {...*} more
  *
  * @returns {*}
  */
 MergeChange.prototype.update = MergeChange.prototype.prepareMerge(MergeChange.KINDS.UPDATE);
 
 /**
- * Merge Any with Any.
+ * Merges Array with Array.
  *
- * @todo On kind "merge" clone first argument?
+ * @param {Array} first
+ * @param {Array} second
+ * @param {string} kind
  *
- * @param first
- * @param second
- * @param kind
+ * @returns {Array}
  *
- * @returns {*}
+ * @note Arrays are cloned deeply when merging.
+ * @note Otherwise, arrays are overridden by assignment.
  */
-MergeChange.prototype.mergeAnyAny = function (first, second, kind) {
-  return this[kind](undefined, second);
+MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
+  if (MergeChange.KINDS.MERGE === kind) {
+    return second.map(value => this[kind](undefined, value));
+  }
+  return second; // Overrides existing array by assignment.
 }
 
 /**
- * Merge Any with undefined.
+ * Merges Object with Object.
  *
- * @todo On kind "merge" clone first argument?
+ * @param {Object} first
+ * @param {Object} second
+ * @param {string} kind
  *
- * @param first
- * @param second
- * @param kind
+ * @returns {Object}
+ */
+MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
+  let isChange = MergeChange.KINDS.MERGE === kind;
+  let result = MergeChange.KINDS.PATCH === kind ? first : {};
+
+  const firstKeys = Object.keys(first);
+  const secondKeys = new Set(Object.keys(second));
+  let keyResult, operations = []; // Initialize.
+
+  for (const key of firstKeys) {
+    if (key in second /* Own or inherited in this case. */) {
+      keyResult = this[kind](first[key], second[key]);
+      secondKeys.delete(key);
+    } else {
+      keyResult = this[kind](first[key], undefined);
+    }
+    isChange = isChange || keyResult !== first[key];
+    result[key] = keyResult; // Object pointer.
+  }
+  for (const key of secondKeys) {
+    if (this.isOperation(key)) {
+      operations.push([key, second[key]]);
+    } else {
+      keyResult = this[kind](undefined, second[key]);
+      isChange = isChange || keyResult !== first[key];
+      result[key] = keyResult; // Object pointer.
+    }
+  }
+  for (const [operation, params] of operations) {
+    isChange = this.operation(result, operation, params) || isChange;
+  }
+  return isChange ? result : first;
+}
+
+/**
+ * Merges Undefined with Date.
+ *
+ * @param {undefined} first
+ * @param {Date} second
+ * @param {string} kind
+ *
+ * @returns {Date}
+ */
+MergeChange.prototype.mergeUndefinedDate = function (first, second, kind) {
+  return MergeChange.KINDS.MERGE === kind ? new Date(second) : second;
+}
+
+/**
+ * Merges Undefined with Set.
+ *
+ * @param {undefined} first
+ * @param {Set} second
+ * @param {string} kind
+ *
+ * @returns {Set}
+ */
+MergeChange.prototype.mergeUndefinedSet = function (first, second, kind) {
+  return MergeChange.KINDS.MERGE === kind ? new Set(second) : second;
+}
+
+/**
+ * Merges Undefined with WeakSet.
+ *
+ * @param {undefined} first
+ * @param {WeakSet} second
+ * @param {string} kind
+ *
+ * @returns {WeakSet}
+ */
+MergeChange.prototype.mergeUndefinedWeakSet = function (first, second, kind) {
+  return MergeChange.KINDS.MERGE === kind ? new WeakSet(second) : second;
+}
+
+/**
+ * Merges Undefined with Map.
+ *
+ * @param {undefined} first
+ * @param {Map} second
+ * @param {string} kind
+ *
+ * @returns {Map}
+ */
+MergeChange.prototype.mergeUndefinedMap = function (first, second, kind) {
+  return MergeChange.KINDS.MERGE === kind ? new Map(second) : second;
+}
+
+/**
+ * Merges Undefined with WeakMap.
+ *
+ * @param {undefined} first
+ * @param {WeakMap} second
+ * @param {string} kind
+ *
+ * @returns {WeakMap}
+ */
+MergeChange.prototype.mergeUndefinedWeakMap = function (first, second, kind) {
+  return MergeChange.KINDS.MERGE === kind ? new WeakMap(second) : second;
+}
+
+/**
+ * Merges Undefined with Array.
+ *
+ * @param {undefined} first
+ * @param {Array} second
+ * @param {string} kind
+ *
+ * @returns {Array}
+ */
+MergeChange.prototype.mergeUndefinedArray = function (first, second, kind) {
+  return MergeChange.KINDS.MERGE === kind ? this[kind]([], second) : second;
+}
+
+/**
+ * Merges Undefined with Object.
+ *
+ * @param {undefined} first
+ * @param {Object} second
+ * @param {string} kind
+ *
+ * @returns {Object}
+ */
+MergeChange.prototype.mergeUndefinedObject = function (first, second, kind) {
+  return MergeChange.KINDS.MERGE === kind ? this[kind]({}, second)
+    : this[kind](second, this.extractOperations(second));
+}
+
+/**
+ * Merges Undefined with Any.
+ *
+ * @param {undefined} first
+ * @param {*} second
+ * @param {string} kind
+ *
+ * @returns {*}
+ */
+MergeChange.prototype.mergeUndefinedAny = function (first, second, kind) {
+  return second; // First undefined, second replaces.
+}
+
+/**
+ * Merges Any with Undefined.
+ *
+ * @param {*} first
+ * @param {undefined} second
+ * @param {string} kind
  *
  * @returns {*}
  */
@@ -137,216 +284,58 @@ MergeChange.prototype.mergeAnyUndefined = function (first, second, kind) {
 }
 
 /**
- * Merge undefined with any types.
+ * Merges Any with Any.
  *
- * @todo On kind "merge" clone second argument?
- *
- * @param first
- * @param second
- * @param kind
+ * @param {*} first
+ * @param {*} second
+ * @param {string} kind
  *
  * @returns {*}
  */
-MergeChange.prototype.mergeUndefinedAny = function (first, second, kind) {
-  return second;
+MergeChange.prototype.mergeAnyAny = function (first, second, kind) {
+  return second; // First unsupported, second replaces.
 }
 
 /**
- * Merge undefined with Date.
+ * Checks if a declarative operation exists.
  *
- * @param first
- * @param second
- * @param kind
+ * @param {String} operation
+ * @param {*} params
  *
- * @returns {Date}
- */
-MergeChange.prototype.mergeUndefinedDate = function (first, second, kind) {
-  return kind === MergeChange.KINDS.MERGE ? new Date(second) : second;
-}
-
-/**
- * Merge undefined with Set.
- *
- * @param first
- * @param second
- * @param kind
- *
- * @returns {Set}
- */
-MergeChange.prototype.mergeUndefinedSet = function (first, second, kind) {
-  return kind === MergeChange.KINDS.MERGE ? new Set(second) : second;
-}
-
-/**
- * Merge undefined with Map.
- *
- * @param first
- * @param second
- * @param kind
- *
- * @returns {Map}
- */
-MergeChange.prototype.mergeUndefinedMap = function (first, second, kind) {
-  return kind === MergeChange.KINDS.MERGE ? new Map(second) : second;
-}
-
-/**
- * Merge undefined with WeekSet.
- *
- * @param first
- * @param second
- * @param kind
- *
- * @returns {WeekSet}
- */
-MergeChange.prototype.mergeUndefinedWeekSet = function (first, second, kind) {
-  return kind === MergeChange.MERGE ? new WeakSet(second) : second;
-}
-
-/**
- * Merge undefined with WeekMap.
- *
- * @param first
- * @param second
- * @param kind
- *
- * @returns {WeekMap}
- */
-MergeChange.prototype.mergeUndefinedWeekMap = function (first, second, kind) {
-  return kind === MergeChange.KINDS.MERGE ? new WeakMap(second) : second;
-}
-
-/**
- * Merge undefined with array.
- *
- * @param first
- * @param second
- * @param kind
- *
- * @returns {Array}
- */
-MergeChange.prototype.mergeUndefinedArray = function (first, second, kind) {
-  return kind === MergeChange.KINDS.MERGE ? this.mergeArrayArray([], second, kind) : second;
-}
-
-/**
- * Merge undefined with plain object.
- *
- * @param first
- * @param second
- * @param kind
- *
- * @returns {Object}
- */
-MergeChange.prototype.mergeUndefinedObject = function (first, second, kind) {
-  const operations = this.extractOperations(second);
-  return this.mergeObjectObject(second, operations, kind);
-}
-
-/**
- * Merge plain object with plain object.
- *
- * @param first
- * @param second
- * @param kind
- *
- * @returns {Object}
- */
-MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
-  let result = kind === MergeChange.KINDS.PATCH ? first : {};
-  let isChange = kind === MergeChange.KINDS.MERGE;
-
-  const keysFirst = Object.keys(first);
-  const keysSecond = new Set(Object.keys(second));
-
-  let resultField, operations = [];
-
-  for (const key of keysFirst) {
-    if (key in second) {
-      resultField = this[kind](first[key], second[key]);
-      keysSecond.delete(key);
-    } else {
-      resultField = this[kind](first[key], undefined);
-    }
-    isChange = isChange || resultField !== first[key];
-    result[key] = resultField;
-  }
-
-  // Declarative operations.
-  for (const key of keysSecond) {
-    if (this.isOperation(key)) {
-      operations.push([key, second[key]]);
-    } else {
-      resultField = this[kind](undefined, second[key]);
-      isChange = isChange || resultField !== first[key];
-      result[key] = resultField;
-    }
-  }
-
-  // Execute declarative operations.
-  for (const [operation, params] of operations) {
-    isChange = this.operation(result, operation, params) || isChange;
-  }
-  return isChange ? result : first;
-}
-
-/**
- * Merge array with array.
- *
- * Replace arrays - returns second argument.
- * On kind "merge" we clone second argument.
- *
- * @param first
- * @param second
- * @param kind
- *
- * @returns {Array}
- */
-MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
-  if (kind === MergeChange.KINDS.MERGE) {
-    return second.map(item => this[kind](undefined, item));
-  }
-  return second;
-}
-
-/**
- * Checking if a declarative operation exists.
- *
- * @param operation
- * @param [params]
- *
- * @returns {boolean}
+ * @returns {Boolean}
  */
 MergeChange.prototype.isOperation = function (operation, params) {
   return Boolean(this[`operation${operation}`]);
 }
 
 /**
- * Extract operations from object.
+ * Extracts declarative operations.
  *
- * @param object
+ * @param {*} value Mutated by reference.
  *
  * @returns {Object}
  */
-MergeChange.prototype.extractOperations = function (object) {
-  let result = {};
-  const keys = Object.keys(object);
+MergeChange.prototype.extractOperations = function (value) {
+  const result = {}; // Intialize.
 
-  for (const key of keys) {
-    if (this.isOperation(key, object[key])) {
-      result[key] = object[key];
-      delete object[key];
+  if (!value || typeof value !== 'object') {
+    return result; // Not possible.
+  }
+  for (const key of Object.keys(value)) {
+    if (this.isOperation(key, value[key])) {
+      result[key] = value[key];
+      delete value[key];
     }
   }
   return result;
 }
 
 /**
- * Execute declarative operation.
+ * Executes a declarative operation.
  *
- * @param source
- * @param operation
- * @param params
+ * @param {*} source
+ * @param {String} operation
+ * @param {*} params
  *
  * @returns {*}
  */
@@ -357,12 +346,12 @@ MergeChange.prototype.operation = function (source, operation, params) {
 }
 
 /**
- * Operation: `$set`.
+ * Performs declarative operation: `$set`.
  *
- * @param source
- * @param params
+ * @param {*} source
+ * @param {*} params
  *
- * @returns {boolean}
+ * @returns {Boolean}
  */
 MergeChange.prototype.operation$set = function (source, params, separator = '.') {
   if(!source || typeof source !== 'object') {
@@ -391,12 +380,12 @@ MergeChange.prototype.operation$ꓺset = function(source, params, separator = '�
 }
 
 /**
- * Operation: `$unset`.
+ * Performs declarative operation: `$unset`.
  *
- * @param source
- * @param params
+ * @param {*} source
+ * @param {*} params
  *
- * @returns {boolean}
+ * @returns {Boolean}
  */
 MergeChange.prototype.operation$unset = function (source, params, separator = '.') {
   if(!source || typeof source !== 'object') {
@@ -424,12 +413,12 @@ MergeChange.prototype.operation$ꓺunset = function(source, params, separator = 
 }
 
 /**
- * Operation: `$leave`.
+ * Performs declarative operation: `$leave`.
  *
- * @param source
- * @param params
+ * @param {*} source
+ * @param {*} params
  *
- * @returns {boolean}
+ * @returns {Boolean}
  */
 MergeChange.prototype.operation$leave = function (source, params, separator = '.') {
   if(!source || typeof source !== 'object') {
@@ -484,12 +473,12 @@ MergeChange.prototype.operation$ꓺleave = function(source, params, separator = 
 }
 
 /**
- * Operation: `$push`.
+ * Performs declarative operation: `$push`.
  *
- * @param source
- * @param params
+ * @param {*} source
+ * @param {*} params
  *
- * @returns {boolean}
+ * @returns {Boolean}
  */
 MergeChange.prototype.operation$push = function (source, params, separator = '.') {
   if(!source || typeof source !== 'object') {
@@ -525,12 +514,12 @@ MergeChange.prototype.operation$ꓺpush = function(source, params, separator = '
 }
 
 /**
- * Operation: `$pull`.
+ * Performs declarative operation: `$pull`.
  *
- * @param source
- * @param params
+ * @param {*} source
+ * @param {*} params
  *
- * @returns {boolean}
+ * @returns {Boolean}
  */
 MergeChange.prototype.operation$pull = function (source, params, separator = '.') {
   if(!source || typeof source !== 'object') {
@@ -572,12 +561,12 @@ MergeChange.prototype.operation$ꓺpull = function(source, params, separator = '
 }
 
 /**
- * Operation: `$concat`.
+ * Performs declarative operation: `$concat`.
  *
- * @param source
- * @param params
+ * @param {*} source
+ * @param {*} params
  *
- * @returns {boolean}
+ * @returns {Boolean}
  */
 MergeChange.prototype.operation$concat = function (source, params, separator = '.') {
   if(!source || typeof source !== 'object') {
@@ -597,7 +586,7 @@ MergeChange.prototype.operation$concat = function (source, params, separator = '
   const paths = Object.keys(values);
 
   for (const path of paths) {
-    let value = values[path];
+    const value = values[path];
     let array = u.get(source, path, [], separator);
 
     if (!Array.isArray(array)) {
@@ -613,12 +602,12 @@ MergeChange.prototype.operation$ꓺconcat = function(source, params, separator =
 }
 
 /**
- * Operation: `$default`.
+ * Performs declarative operation: `$default`.
  *
- * @param source
- * @param params
+ * @param {*} source
+ * @param {*} params
  *
- * @returns {boolean}
+ * @returns {Boolean}
  */
 MergeChange.prototype.operation$default = function (source, params, separator = '.') {
   if(!source || typeof source !== 'object') {
@@ -649,12 +638,15 @@ MergeChange.prototype.operation$ꓺdefault = function(source, params, separator 
 }
 
 /**
- * Operation: `$propSortOrder`.
+ * Performs declarative operation: `$propSortOrder`.
  *
- * @param source
- * @param params
+ * @param {*} source
+ * @param {*} params
  *
- * @returns {boolean}
+ * @returns {Boolean}
+ *
+ * @note This also has the side-effect of clearing all `undefined` properties from an object,
+ *       as it is not currently possible to apply proper sorting logic otherwise.
  */
 MergeChange.prototype.operation$propSortOrder = function (source, params, separator = '.') {
   if(u.type(source) !== 'Object') {
@@ -673,14 +665,14 @@ MergeChange.prototype.operation$propSortOrder = function (source, params, separa
   const paths = params;
   const origSource = {...source};
 
-  for (const [prop] of Object.entries(source)) {
-    delete source[prop]; // Start clean again.
+  for (const [key] of Object.entries(source)) {
+    delete source[key]; // Start clean again.
   }
   for (const path of paths) {
     const value = u.get(origSource, path, undefined, separator);
     if (undefined !== value) u.set(source, path, value, separator);
   }
-  for (const [path, value] of Object.entries(u.flatten(origSource, '', separator))) {
+  for (const [path, value] of Object.entries(u.toFlat(origSource, '', separator))) {
     if (undefined !== value && undefined === u.get(source, path, undefined, separator)) {
       u.set(source, path, value, separator);
     }
@@ -692,38 +684,57 @@ MergeChange.prototype.operation$ꓺpropSortOrder = function(source, params, sepa
 }
 
 /**
- * Add custom merge method.
+ * Adds a custom merge type handler.
  *
- * @param type1 {String} Type of source value.
- * @param type2 {String} Type of secondary value.
- * @param callback {Function} Merge function with argument: (first, second, kind).
+ * @param {String}   type1    Type of source value.
+ * @param {String}   type2    Type of secondary value.
+ * @param {Function} callback Merge function: `(first: unknown, second: unknown, kind: string): unknown`.
+ *                            Callback should return the resulting merged value.
  *
- * @returns {*} The previous merge method with name `merge${type1}${type2}`.
+ * @returns {*} Previous merge callback.
  */
 MergeChange.prototype.addMerge = function (type1, type2, callback) {
-  const previous = MergeChange.prototype[`merge${type1}${type2}`];
-  MergeChange.prototype[`merge${type1}${type2}`] = callback;
-  return previous;
+  if(!type1 || typeof type1 !== 'string') {
+    throw new Error('Invalid merge type as position 1.');
+  }
+  if(!type2 || typeof type2 !== 'string') {
+    throw new Error('Invalid merge type as position 2.');
+  }
+  if(!callback || typeof callback !== 'function') {
+    throw new Error('Invalid merge callback.');
+  }
+  const previousCallback = MergeChange.prototype[`merge${type1}${type2}`];
+  MergeChange.prototype[`merge${type1}${type2}`] = callback; // New callback.
+
+  return previousCallback;
 }
 
 /**
- * Add custom declarative operation.
+ * Adds a custom declarative merge operation.
  *
- * @param name {String} Operation name.
- * @param callback {Function} Operation: (source, params, separator) => boolean.
+ * @param {String}   name     Operation name. Must start with `$`.
+ * @param {Function} callback Operation: `(source: unknown, params: unknown, separator?: string): boolean`.
+ *                            Callback should return true if the operation results in changes.
  *
- * @returns {*} The previous operation method with `$name`.
+ * @returns {*} Previous operation callback.
  */
 MergeChange.prototype.addOperation = function (name, callback) {
-  if (!name.startsWith('$')) {
-    name = '$' + name;
+  if(!name || typeof name !== 'string') {
+    throw new Error('Invalid operation name.');
   }
-  const previous = MergeChange.prototype[`operation${name}`];
-  MergeChange.prototype[`operation${name}`] = callback;
-  return previous;
+  if(!callback || typeof callback !== 'function') {
+    throw new Error('Invalid operation callback.');
+  }
+  if (!name.startsWith('$')) {
+    name = '$' + name; // Must begin with `$`.
+  }
+  const previousCallback = MergeChange.prototype[`operation${name}`];
+  MergeChange.prototype[`operation${name}`] = callback; // New callback.
+
+  return previousCallback;
 }
 
 /**
- * Module exports.
+ * Exports module.
  */
 module.exports = new MergeChange();

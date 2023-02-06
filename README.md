@@ -1,7 +1,7 @@
 # @clevercanyon/merge-change.fork
 
 A fork of the original [merge-change](https://www.npmjs.com/package/merge-change) on NPM.
-This fork has been patched to resolve a [prototype pollution security issue](https://github.com/advisories/GHSA-f9cv-665r-275h). A few things have also been added, fixed, and improved upon, while still preserving all of the existing functionality in the original module. This works as a drop-in replacement for `merge-change`.
+This fork has been patched to resolve a [prototype pollution security issue](https://github.com/advisories/GHSA-f9cv-665r-275h). A few things have also been added (e.g., TypeScript typings), a few things have been fixed or improved upon, while still preserving all expectations of the original module. Therefore, this works as a drop-in replacement for `merge-change`.
 
 `merge-change` is a simple library for **deep merge** of objects and other types, also for **patches** and **immutable updates**. By default, merge works for "plain objects". Values of other types are replaced, but you can **customize merging** between specific types. Also, you can use **declarative operations** to do some very interesting things like `unset`, `leave`, `push`, `pull`, `defaults`, and others. For example to remove properties of object, to replace "plain objects", to concat arrays. Calculating diffs between two values.
 
@@ -467,79 +467,181 @@ Result
 
 ## Customize Merge
 
-You can declare function for merge custom types (or override default logic). Returns previous merge method.
+You can declare a new merge handler for custom types and/or override default logic. This API returns the previous (i.e., any existing) merge handler so that it can be restored, which is important! Please be sure to restore.
 
 `mc.addMerge(type1, type2, callback)`
 
--   `type1, type2` - constructor name of the first and second values: `Number, String, Boolean, Object, Array, Date, RegExp, Function, Undefined, Null, Symbol, Set, Map` and other system and custom constructor names
--   `callback` - merge function with argument: (first, second, kind)
-    -   `first` - first value for merge
-    -   `second` - second value for merge
-    -   `kind` - name of merging method, such as "merge", "patch", "update".
+-   `type1, type2`: Constructor names of the `first` and `second` values; e.g., `Number, String, Boolean, Object, Array, Date, RegExp, Function, Undefined, Null, Symbol, Set, Map` and other system and custom constructor names are all permissible.
+-   `callback`: Merge handler: `(first: unknown, second: unknown, kind: string): unknown`
+    -   `first`: First value for merge. Of type `type1` passed to `mc.addMerge()`.
+    -   `second`: Second value for merge. Of type `type2` passed to `mc.addMerge()`.
+    -   `kind`: Merge kind. One of: `merge`, `patch`, or `update`.
 
-For example, if you always need to union arrays, you can declare method to merge array with array.
+For example, if you always need to union arrays, you can declare a method to merge `Array` with `Array`.
 
 ```js
 const previous = mc.addMerge('Array', 'Array', function (first, second, kind) {
-	// merge - creaete new array with deep clone
-	if (kind === 'merge') {
-		return first.concat(second).map((item) => mc.merge(undefined, item));
+	if ('merge' === kind) {
+		return first.concat(second).map((v) => mc.merge(undefined, v));
 	}
-	// patch - mutate first array
-	if (kind === 'patch') {
+	if ('patch' === kind) {
 		first.splice(first.length, 0, ...second);
 		return first;
 	}
-	// update - return first array if second is empty, or create new without clone
-	if (second.length === 0) {
-		return first;
+	// Else doing an `update` merge.
+	if (0 === second.length) {
+		return first; // No update necessary.
 	} else {
-		return first.concat(second);
+		return first.concat(second); // Mutation required.
 	}
 });
 
-// reset custom method
+// Restores previous handler.
 mc.addMerge('Array', 'Array', previous);
 ```
 
 ## Customize Declarative Operation
 
-You can declare function for declarative operation (or override default logic). Returns previous operation method.
+You can declare a new handler for a declarative operation and/or override default logic. This API returns the previous operation handler so that it can be restored, which is important! Please be sure to restore.
 
 `mc.addOperation(name, callback)`
 
--   `name` - operation name, for example "$concat"
--   `callback` - operation function with argument: (source, params). Return new value or source.
-    -   `source` - the value in which the operation is defined (`source: {$concat: params}`)
-    -   `params` - value of operator (`$concat: params`)
+-   `name`: Operation name; e.g., `$concat`, `$unset`, `$pull`, etc. ... or a new one.
+-   `callback`: Operation handler: `(source: unknown, params: unknown, separator?: string): boolean`.
+    -   `source`: Value the operation should act upon.
+    -   `params`: Value of operator; e.g., `$concat: [...params]`.
 
-For example, if sometimes need to union arrays, you can declare declarative operation $concat (it exists in the library).
+For example, here's an already-defined operation handler that could be customized to meet the needs of different use cases. Also consider giving your operations unique names or prefixing all of your custom operations to avoid conflicts with other packages depending on `merge-change`.
 
 ```js
-const previous = mc.addOperation('$concat', function (source, params) {
+const previous = mc.addOperation('$concat', (source, params, separator = '.') => {
+	if (!Array.isArray(params)) {
+		throw new Error('$concat operation requires an array.');
+	}
 	const paths = Object.keys(params);
 
 	for (const path of paths) {
-		let value = params[path];
-		let array = utils.get(source, path, []);
+		const value = params[path];
+		let array = mc.u.get(source, path, [], separator);
 
-		if (Array.isArray(array)) {
-			array = array.concat(value);
-			utils.set(source, path, array);
-		} else {
-			throw new Error('Cannot concat on not array');
+		if (!Array.isArray(array)) {
+			throw new Error('$concat operation requires a source array.');
 		}
+		array = array.concat(value);
+		mc.u.set(source, path, array, separator);
 	}
-	return paths.length > 0;
+	return paths.length > 0; // Updates occured?
 });
 
-// reset custom operation
+// Restores previous handler.
 mc.addOperation('$concat', previous);
 ```
 
 ## Utilities
 
-**Utilities:** Aliased as `mc.u` (recommended), but `mc.utils` continues to work also.
+**Utilities:** Accessed with `mc.u` (recommended) or `mc.utilities`.
+
+> The legacy `mc.utils` accessor continues to work also and is identical.
+
+### `mc.u.type(value)`
+
+Gets real type of any value. The return value is a string - the name of the constructor.
+
+```js
+mc.u.type(null); // => 'Null'
+mc.u.type(true); // => 'Boolean'
+mc.u.type(undefined); // => 'Undefined'
+mc.u.type({ foo: 'foo' }); // => 'Object'
+mc.u.type(new Object()); // => 'Object'
+mc.u.type(new MyClass()); // => 'MyClass'
+```
+
+### `mc.u.types(value)`
+
+Gets real types of any value. The return value is an array - the names of own or inherited the constructors.
+
+> The legacy `mc.u.typeList()` utility remains and is identical.
+
+```js
+mc.u.types(null); // => ['Null']
+mc.u.types(undefined); // => ['Undefined']
+mc.u.types({ foo: 'foo' }); // => ['Object']
+mc.u.types(new Object()); // => ['Object']
+mc.u.types(true); // => ['Boolean', 'Object']
+mc.u.types(1); // => ['Number', 'Object']
+mc.u.types('1'); // => ['String', 'Object']
+mc.u.types(new MyClass()); // => ['MyClass', 'Object']
+```
+
+### `mc.u.hasType(value, className)`
+
+Checks instance of class. `className` is string (not constructor). The return value is a boolean.
+
+> The legacy `mc.u.instanceof()` utility remains and is identical.
+
+```js
+mc.u.hasType(100, 'Number'); // => true
+mc.u.hasType(new MyClass(), 'MyClass'); // => true
+mc.u.hasType(new MyClass(), 'Object'); // => true
+```
+
+### `mc.u.toPlain(value, deep = false)`
+
+Converts value to a plain object flattening inherited enumerable string keyed properties of value to own properties of the plain object. To customize conversion, you can define the `[mc.methods.toPlain]()` or `.toJSON()` methods in your object.
+
+> The legacy `mc.u.plain(value, deep = true)` utility remains as a deprecated alias with a slightly different strategy, which is somewhat broken, as it only navigates existing plain objects, and is recursive by default. Please migrate to `mc.u.toPlain()` for an improved experience. However, be cautious, as the new utility does not preserve non-plain object structures; i.e., it actually converts any object to a plain object, as one would expect from this utility.
+
+```js
+const plain = mc.u.toPlain({
+	date: new Date('2021-01-07T19:10:21.759Z'),
+	prop: {
+		_id: new ObjectId('6010a8c75b9b393070e42e68'),
+	},
+});
+```
+
+Result (plain).
+
+```js
+{
+  date: '2021-01-07T19:10:21.759Z',
+  prop: {
+    _id: '6010a8c75b9b393070e42e68'
+  }
+}
+```
+
+### `mc.u.toFlat(value, path = '', separator = '.', clearUndefined = false)`
+
+Converts a nested structure to a flat object containing inherited enumerable string keyed properties. Property names become paths with `separator`. Arrays use a `[]` notation to represent their numeric index; e.g., `[0]`. To customize conversion, you can define the `[mc.methods.toFlat]()` or `.toJSON()` methods in your object.
+
+> The legacy `mc.u.flat()` remains as a deprecated alias with a slightly different and somewhat broken strategy, as it does not flatten arrays, and it doesn’t use the Lodash-compatible array `[]` bracket syntax for arrays. Thus, it doesn't actually flatten an object. Migrate to `mc.u.toFlat()` for an improved experience.
+
+```js
+const value = {
+	a: {
+		b: {
+			c: 100,
+			d: [1, 2, { '3': 3, four: 4 }],
+		},
+	},
+	e: 'foo',
+};
+const flat = mc.u.toFlat(value);
+```
+
+Result (flat).
+
+```js
+{
+  'a.b.c': 100,
+  'a.b.d[0]': 1,
+  'a.b.d[1]': 2,
+  'a.b.d[2].3': 3,
+  'a.b.d[2].four': 4,
+  'e': 'foo',
+}
+```
 
 ### `mc.u.diff(source, compare, {ignore = [], separator = '.'})`
 
@@ -573,7 +675,7 @@ const second = {
 const diff = mc.u.diff(first, second, { ignore: ['secret'], separator: '/' });
 ```
 
-Result (diff)
+Result (diff).
 
 ```js
 {
@@ -590,75 +692,31 @@ Result (diff)
 }
 ```
 
-### `mc.u.type(value)`
+### `mc.u.matches(value, conditions = {}, data = {}, separator = '.', errors = [])`
 
-Get real type of any value. The return value is a string - the name of the constructor.
-
-```js
-mc.u.type(null); // => 'Null'
-mc.u.type(true); // => 'Boolean'
-mc.u.type(new ObjectId()); // => 'ObjectID'
-```
-
-### `mc.u.instanceof(value, className)`
-
-Checking instance of class. `className` is string (not constructor). The return value is a boolean.
+Compares a value to a set of conditions given in the form of properties and their expected values. The structured `conditions` given may contain path notations beginning with `$` or `$ꓺ`, which will be used as getters with `data` as the source. If `errors` is given as an empty array, it is populated by reference with the list of paths that failed to match. This utility returns `true` if all conditions match.
 
 ```js
-mc.u.instanceof(100, 'Number'); // => true
-mc.u.instanceof(new MyClass(), 'MyClass'); // => true
-mc.u.instanceof(new MyClass(), 'Object'); // => true
-```
-
-### `mc.u.plain(value)`
-
-Converting deep object values to plain types if value has plain representation. For example, all dates are converted to a string, but RegExp is not.
-To customize conversion, you can define the `[mc.methods.toPlain]()` method in your object.
-Nice for unit tests.
-
-> The method is similar to converting to JSON, only objects (arrays, functions...) are not converted to string representation.
-
-```js
-const plain = mc.u.plain({
-	date: new Date('2021-01-07T19:10:21.759Z'),
-	prop: {
-		_id: new ObjectId('6010a8c75b9b393070e42e68'),
-	},
-});
-```
-
-Result (plain).
-
-```js
-{
-  date: '2021-01-07T19:10:21.759Z',
-  prop: {
-    _id: '6010a8c75b9b393070e42e68'
-  }
-}
-```
-
-### `mc.u.flatten(value, path = '', separator = '.', clearUndefined = false)`
-
-Aliased as `flatten` (recommended), but `mc.u.flat` continues to work also. Converting a nested structure to a flat object. Property names become paths with `separator`. To customize conversion, you can define the `[mc.methods.toFlat]()` method in your object.
-
-```js
-const value = {
-	a: {
-		b: {
-			c: 100,
+const matches = mc.u.matches(
+	{ prop1: '1', prop2: 'admin', prop3: 'admin@example.com' }, // Structure to check.
+	{ prop1: '1', prop2: '$session.user.name' }, // Conditions that must match up.
+	{
+		// Data source with any paths given by conditions.
+		session: {
+			user: {
+				id: 1,
+				name: 'admin',
+				email: 'admin@example.com',
+			},
 		},
 	},
-};
-const flattened = mc.u.flatten(value, 'parent', '.');
+);
 ```
 
-Result (flattened).
+Result (matches).
 
 ```js
-{
-  'parent.a.b.c': 100
-}
+console.log(matches); // true
 ```
 
 ## License

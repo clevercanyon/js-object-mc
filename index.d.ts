@@ -8,38 +8,34 @@ export type Methods = {
 	toOperation: unique symbol;
 };
 export type Utilities = {
-	get: (obj: AnyObject, path: string | number, defaultValue?: unknown, separator?: string) => unknown;
-	set: (obj: AnyObject, path: string | number, value: unknown, keepExisting_or_separator?: boolean | string, separator?: string) => unknown;
-	setDefault: (obj: AnyObject, path: string | number, value: unknown, separator?: string) => unknown;
-	unset: (obj: AnyObject, path: string | number, separator?: string) => unknown;
+	get: (node: unknown, path: string | number | Array<string | number>, defaultValue?: unknown, separator?: string) => unknown;
+	defaultTo: (node: unknown, path: string | number | Array<string | number>, value: unknown, separator?: string) => unknown;
 
-	plain: (value: AnyObject, recursive?: boolean) => AnyObject;
-	flatten: (value: AnyObject, separator?: string, clearUndefined?: boolean) => PlainObject;
+	set: (node: unknown, path: string | number | Array<string | number>, value: unknown, keepExisting_or_separator?: boolean | string, separator?: string) => unknown;
+	unset: (node: unknown, path: string | number | Array<string | number>, separator?: string) => unknown;
 
-	diff: (value: AnyObject, compare: AnyObject, opts?: {
+	toPlain: (value: unknown, deep?: boolean) => unknown;
+	toFlat: (value: unknown, path?: string, separator?: string, clearUndefined?: boolean) => unknown;
+
+	diff: (value: unknown, compare: unknown, opts?: {
 		separator?: string;
 		path?: string | number;
 		white?: Array<string | number>;
 		ignore?: Array<string | number>;
 		equal?: (a: unknown, b: unknown) => boolean;
-	}) => PlainObject;
-	matches: (value: AnyObject, conditions: AnyObject, data?: AnyObject, separator?: string, errors?: unknown[]) => boolean;
+	}) => unknown;
+
+	matches: (value: unknown, conditions?: unknown, data?: AnyObject, separator?: string, errors?: unknown[]) => boolean;
+	equals: (valueA: unknown, valueB: unknown) => boolean;
 
 	type: (value: unknown) => string;
-	typeList: (value: unknown) => string[];
+	types: (value: unknown) => string[];
+	hasType: (value: unknown, className: string) => boolean;
 
-	equals: (valueA: unknown, valueB: unknown) => boolean;
-	instanceof: (value: unknown, className: string) => boolean;
-
-	splitPath: (path: string | number | Array<string|number>, separator?: string) => Array<string | number>;
-
-	// Utility aliases.
-	equal: (valueA: unknown, valueB: unknown) => boolean;
-	flat: (value: AnyObject, separator?: string, clearUndefined?: boolean) => PlainObject;
-	match: (value: AnyObject, conditions: AnyObject, data?: AnyObject, separator?: string, errors?: unknown[]) => boolean;
+	splitPath: (path: string | number | Array<string | number>, separator?: string) => Array<string | number>;
 };
-export type MergeCallback = (first: AnyObject, second: AnyObject, kind: KINDS) => AnyObject;
-export type OperationCallback = (source: AnyObject, params: AnyObject, separator?: string) => boolean;
+export type MergeCallback = (first: unknown, second: unknown, kind: KINDS) => unknown;
+export type OperationCallback = (source: unknown, params: unknown, separator?: string) => boolean;
 
 export const KINDS: Kinds;
 export const methods: Methods;
@@ -48,9 +44,9 @@ export const u: Utilities;
 export const utils: Utilities;
 export const utilities: Utilities;
 
-export function merge(...values: AnyObject): AnyObject;
-export function patch(...values: AnyObject): AnyObject;
-export function update(...values: AnyObject): AnyObject;
+export function merge(...values: unknown): unknown;
+export function patch(...values: unknown): unknown;
+export function update(...values: unknown): unknown;
 
 export function addMerge(type1: string, type2: string, callback: MergeCallback): MergeCallback | undefined;
 export function addOperation(name: string, callback: OperationCallback): OperationCallback | undefined;

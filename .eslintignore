@@ -12,9 +12,7 @@
 # Customizations.
 # <custom:start>
 
-/index.js
-/methods.js
-/utilities.js
-/merge-change.js
+/*.js
+/tests/**/*.js
 
 # </custom:end>
