@@ -264,7 +264,7 @@ const u = {
 		if ('flat' !== calledAs && value && typeof value === 'object') {
 			if(Array.isArray(value)) {
 				for(let i = 0; i < value.length; i++) {
-					u.toFlat(value[i], '' !== path ? `${path}${separator}[${i}]` : `[${i}]`, separator, clearUndefined, calledAs, result);
+					u.toFlat(value[i], '' !== path ? `${path}[${i}]` : `[${i}]`, separator, clearUndefined, calledAs, result);
 				}
 			} else {
 				for (const [key, keyValue] of Object.entries(value)) {
@@ -504,7 +504,8 @@ const u = {
 			if (path.endsWith(separator)) {
 				path = path.slice(0, -separator.length);
 			}
-			path = path.split(separator).map((pathPart) => {
+			const regExp = new RegExp('(' + separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '|\[[0-9]+\])');
+			path = path.split(regExp).filter((v) => v !== '' && v !== separator).map((pathPart) => {
 				return /^\[[0-9]+\]$/u.test(pathPart) ? Number(pathPart.slice(1, -1)) : pathPart;
 			});
 		}

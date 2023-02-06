@@ -40,8 +40,6 @@ Example
 ```js
 import mc from 'merge-change';
 
-// Create new object adding "a.three" and deleting "a.one".
-
 let first = {
 	a: {
 		one: true,
@@ -54,14 +52,10 @@ let second = {
 		$unset: ['one'], // $unset is a declarative operation.
 	},
 };
-
 const result = mc.merge(first, second);
 
-console.log(result);
-```
-
-```log
-{ a: { two: 2,  three: 3} }
+// Result is a new merged object clone.
+console.log(result); // { a: { two: 2,  three: 3} }
 ```
 
 ### Patch
@@ -85,12 +79,12 @@ let second = {
 		$unset: ['one'], // $unset is a declarative operation.
 	},
 };
-
-const result = mc.patch(first, second); // => { a: { two: 2,  three: 3} }
+const result = mc.patch(first, second);
 
 // Result is a mutated first argument.
-console.log(result === first); // => true
-console.log(result !== second); // => true
+console.log(result); // { a: { two: 2,  three: 3} }
+console.log(result === first); // true
+console.log(result !== second); // true
 ```
 
 ### Update
@@ -117,15 +111,15 @@ let second = {
 		$unset: ['one'], // $unset is a declarative operation.
 	},
 };
-
-const result = mc.update(first, second); // => { a: { two: 2,  three: 3, sub: { value: 3 }} }
+const result = mc.update(first, second);
 
 // Result is a new object.
-console.log(result !== first); // => true
-console.log(result !== second); // => true
+console.log(result); // { a: { two: 2, sub: { value: 3 }, three: 3 } }
+console.log(result !== first); // true
+console.log(result !== second); // true
 
 // Object "a.sub" is unchanged.
-console.log(result.a.sub === first.a.sub); // => true
+console.log(result.a.sub === first.a.sub); // true
 ```
 
 ## Declarative Operations
@@ -548,12 +542,12 @@ mc.addOperation('$concat', previous);
 Gets real type of any value. The return value is a string - the name of the constructor.
 
 ```js
-mc.u.type(null); // => 'Null'
-mc.u.type(true); // => 'Boolean'
-mc.u.type(undefined); // => 'Undefined'
-mc.u.type({ foo: 'foo' }); // => 'Object'
-mc.u.type(new Object()); // => 'Object'
-mc.u.type(new MyClass()); // => 'MyClass'
+console.log(mc.u.type(null)); // 'Null'
+console.log(mc.u.type(true)); // 'Boolean'
+console.log(mc.u.type(undefined)); // 'Undefined'
+console.log(mc.u.type({ foo: 'foo' })); // 'Object'
+console.log(mc.u.type(new Object())); // 'Object'
+console.log(mc.u.type(new URL('https://foo'))); // 'URL'
 ```
 
 ### `mc.u.types(value)`
@@ -563,14 +557,14 @@ Gets real types of any value. The return value is an array - the names of own or
 > The legacy `mc.u.typeList()` utility remains and is identical.
 
 ```js
-mc.u.types(null); // => ['Null']
-mc.u.types(undefined); // => ['Undefined']
-mc.u.types({ foo: 'foo' }); // => ['Object']
-mc.u.types(new Object()); // => ['Object']
-mc.u.types(true); // => ['Boolean', 'Object']
-mc.u.types(1); // => ['Number', 'Object']
-mc.u.types('1'); // => ['String', 'Object']
-mc.u.types(new MyClass()); // => ['MyClass', 'Object']
+console.log(mc.u.types(null)); // ['Null']
+console.log(mc.u.types(undefined)); // ['Undefined']
+console.log(mc.u.types({ foo: 'foo' })); // ['Object']
+console.log(mc.u.types(new Object())); // ['Object']
+console.log(mc.u.types(true)); // ['Boolean', 'Object']
+console.log(mc.u.types(1)); // ['Number', 'Object']
+console.log(mc.u.types('1')); // ['String', 'Object']
+console.log(mc.u.types(new URL('https://foo'))); // ['URL', 'Object']
 ```
 
 ### `mc.u.hasType(value, className)`
@@ -580,9 +574,9 @@ Checks instance of class. `className` is string (not constructor). The return va
 > The legacy `mc.u.instanceof()` utility remains and is identical.
 
 ```js
-mc.u.hasType(100, 'Number'); // => true
-mc.u.hasType(new MyClass(), 'MyClass'); // => true
-mc.u.hasType(new MyClass(), 'Object'); // => true
+console.log(mc.u.hasType(100, 'Number')); // true
+console.log(mc.u.hasType(new URL('https://foo'), 'URL')); // true
+console.log(mc.u.hasType(new URL('https://foo'), 'Object')); // true
 ```
 
 ### `mc.u.toPlain(value, deep = false)`
@@ -594,10 +588,9 @@ Converts value to a plain object flattening inherited enumerable string keyed pr
 ```js
 const plain = mc.u.toPlain({
 	date: new Date('2021-01-07T19:10:21.759Z'),
-	prop: {
-		_id: new ObjectId('6010a8c75b9b393070e42e68'),
-	},
+	prop: new Object({ _id: '6010a8c75b9b393070e42e68' }),
 });
+console.log(plain);
 ```
 
 Result (plain).
@@ -605,9 +598,7 @@ Result (plain).
 ```js
 {
   date: '2021-01-07T19:10:21.759Z',
-  prop: {
-    _id: '6010a8c75b9b393070e42e68'
-  }
+  prop: { _id: '6010a8c75b9b393070e42e68' }
 }
 ```
 
@@ -628,9 +619,10 @@ const value = {
 	e: 'foo',
 };
 const flat = mc.u.toFlat(value);
+console.log(flat);
 ```
 
-Result (flat).
+Result (flat). @todo: fix
 
 ```js
 {
@@ -673,6 +665,7 @@ const second = {
 };
 
 const diff = mc.u.diff(first, second, { ignore: ['secret'], separator: '/' });
+console.log(diff);
 ```
 
 Result (diff).
@@ -685,10 +678,7 @@ Result (diff).
     'profile.avatar.url': 'new/pic.png',
     'access': [ 700 ]
   },
-  $unset: [
-    'profile.birthday',
-    'name'
-  ]
+  $unset: [ 'profile.birthday', 'name' ]
 }
 ```
 
@@ -711,11 +701,6 @@ const matches = mc.u.matches(
 		},
 	},
 );
-```
-
-Result (matches).
-
-```js
 console.log(matches); // true
 ```
 
