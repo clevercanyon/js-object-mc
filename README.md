@@ -623,7 +623,7 @@ const flat = mc.u.toFlat(value);
 console.log(flat);
 ```
 
-Result (flat). @todo: fix
+Result (flat).
 
 ```js
 {
