@@ -29,13 +29,13 @@ const mc = require('merge-change');
 
 ### Merge
 
-Merge with **deep cloning** without changing the source objects. Great for creating or extending objects from the example (source).
+Merge with **deep cloning** without changing the source objects. Great for creating or extending objects.
 
 ```js
 mc.merge(source, ...values);
 ```
 
-Example
+Example:
 
 ```js
 import mc from 'merge-change';
@@ -56,6 +56,8 @@ const result = mc.merge(first, second);
 
 // Result is a new merged object clone.
 console.log(result); // { a: { two: 2,  three: 3} }
+console.log(result !== first); // true
+console.log(result !== second); // true
 ```
 
 ### Patch
@@ -89,7 +91,7 @@ console.log(result !== second); // true
 
 ### Update
 
-**Immutable merge** - create new instances only if there are diffs (also in inner properties). Nice for state management.
+**Immutable merge** - create new instances only if there are diffs (also in inner properties).
 
 ```js
 mc.update(source, ...changes);
@@ -124,8 +126,7 @@ console.log(result.a.sub === first.a.sub); // true
 
 ## Declarative Operations
 
-When merging objects, you can perform declarative operations at the same time.
-Supported in all merge methods. The syntax is similar to mongodb.
+When merging objects, you can perform declarative operations at the same time. Supported in all merge methods. The syntax is similar to mongodb. The use of `$` as a prefix implies the standard `.` path separator; e.g., `a.b.c[0]` to set `{ a: { b: { c: ['value'] } } }`.. The use of `$ꓺ` implies the use of `ꓺ` ([`\uA4FA`](https://graphemica.com/%EA%93%BA#code)) as a path separator; e.g., `aꓺbꓺc[0]` to set `{ a: { b: { c: ['value'] } } }`.
 
 ### `$set`, `$ꓺset`
 
@@ -151,7 +152,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
@@ -181,7 +182,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
@@ -191,7 +192,7 @@ Result
 }
 ```
 
-#### To unset all fields used `*`
+#### To unset all fields use `*`.
 
 ```js
 const result = mc.merge(
@@ -208,7 +209,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
@@ -238,7 +239,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
@@ -272,7 +273,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
@@ -306,7 +307,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
@@ -338,7 +339,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
@@ -382,7 +383,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
@@ -440,7 +441,7 @@ const result = mc.merge(
 console.log(result);
 ```
 
-Result
+Result:
 
 ```json
 {
