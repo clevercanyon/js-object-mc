@@ -472,7 +472,7 @@ You can declare a new merge handler for custom types and/or override default log
     -   `second`: Second value for merge. Of type `type2` passed to `mc.addMerge()`.
     -   `kind`: Merge kind. One of: `merge`, `patch`, or `update`.
 
-For example, if you always need to union arrays, you can declare a method to merge `Array` with `Array`.
+For example, if you always need to union arrays, you can declare a method to merge `Array` with `Array`. Please be sure to restore the original handler to avoid conflicts with other packages depending on `merge-change`. Alternatively, you can create an entirely separate instance to isolate your customizations; e.g., `mc = mc.newInstance()`. Then add your custom merge handlers to the new instance.
 
 ```js
 const previous = mc.addMerge('Array', 'Array', function (first, second, kind) {
@@ -504,23 +504,27 @@ You can declare a new handler for a declarative operation and/or override defaul
 -   `name`: Operation name; e.g., `$concat`, `$unset`, `$pull`, etc. ... or a new one.
 -   `callback`: Operation handler: `(source: unknown, params: unknown, separator?: string): boolean`.
     -   `source`: Value the operation should act upon.
-    -   `params`: Value of operator; e.g., `$concat: [...params]`.
+    -   `params`: Value of operator; e.g., `$concat: [params]`.
 
-For example, here's an already-defined operation handler that could be customized to meet the needs of different use cases. Also consider giving your operations unique names or prefixing all of your custom operations to avoid conflicts with other packages depending on `merge-change`.
+For example, here's an already-defined operation handler that could be customized to meet the needs of different use cases. Also consider giving your operations unique names or prefixing all of your custom operations to avoid conflicts with other packages depending on `merge-change`. Alternatively, you can create an entirely separate instance to isolate your customizations; e.g., `mc = mc.newInstance()`. Then add your custom operation handlers to the new instance.
 
 ```js
 const previous = mc.addOperation('$concat', (source, params, separator = '.') => {
-	if (!Array.isArray(params)) {
-		throw new Error('$concat operation requires an array.');
+	if (!source || !u.isObject(source)) {
+		throw new Error('Invalid $' + ('ꓺ' === separator ? 'ꓺ' : '') + 'concat. Requires an object source.');
 	}
-	const paths = Object.keys(params);
+	if (!params || !u.isObject(params) || Array.isArray(params)) {
+		throw new Error('Invalid $' + ('ꓺ' === separator ? 'ꓺ' : '') + 'concat params. Expecting non-array object.');
+	}
+	const values = params;
+	const paths = Object.keys(values);
 
 	for (const path of paths) {
-		const value = params[path];
+		const value = values[path];
 		let array = mc.u.get(source, path, [], separator);
 
 		if (!Array.isArray(array)) {
-			throw new Error('$concat operation requires a source array.');
+			throw new Error('Cannot concat onto non-array value.');
 		}
 		array = array.concat(value);
 		mc.u.set(source, path, array, separator);
@@ -636,9 +640,11 @@ Result (flat).
 }
 ```
 
-### `mc.u.diff(source, compare, {ignore = [], separator = '.'})`
+### `mc.u.toDiff(source, compare, {ignore = [], separator = '.'})`
 
-To calculate the difference between `source` and `compare` value. The return value is an object with `$set` and `$unset` operators. Return value can be used in merge functions. The `ignore` parameter - is a list of properties that are not included in the comparison.
+To calculate the difference between `source` and `compare` value. The return value is an object with `$set` and `$unset` operators. Return value can be used in merge functions. The `ignore` parameter is a list of properties that are not included in the comparison.
+
+> The legacy `mc.u.diff()` remains as a deprecated alias with a slightly different and somewhat broken strategy, as it uses the legacy `mc.u.plain()` instead of `mc.u.toPlain()`. Migrate to `mc.u.toDiff()` for an improved experience.
 
 ```js
 const first = {
@@ -665,7 +671,7 @@ const second = {
 	access: [700],
 };
 
-const diff = mc.u.diff(first, second, { ignore: ['secret'], separator: '/' });
+const diff = mc.u.toDiff(first, second, { ignore: ['secret'], separator: '/' });
 console.log(diff);
 ```
 

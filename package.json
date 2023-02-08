@@ -11,7 +11,9 @@
 	"homepage": "https://github.com/clevercanyon/merge-change.fork#readme",
 	"bugs": "https://github.com/clevercanyon/merge-change.fork/issues",
 	"funding": "https://github.com/sponsors/clevercanyon",
-	"keywords": ["clevercanyon"],
+	"keywords": [
+		"clevercanyon"
+	],
 	"author": {
 		"name": "Vladimir Shestakov",
 		"url": "https://github.com/VladimirShestakov"
@@ -23,7 +25,13 @@
 		}
 	],
 	"type": "commonjs",
-	"files": ["/index.js", "/index.d.ts", "/merge-change.js", "/methods.js", "/utilities.js"],
+	"files": [
+		"/index.js",
+		"/index.d.ts",
+		"/merge-change.js",
+		"/methods.js",
+		"/utilities.js"
+	],
 	"bin": {},
 	"imports": {},
 	"exports": null,
@@ -34,18 +42,24 @@
 	"unpkg": "",
 	"types": "./index.d.ts",
 	"typesVersions": {},
-	"dependencies": {},
-	"peerDependencies": {},
+	"peerDependencies": {
+		"lodash": "^4.17.21"
+	},
 	"peerDependenciesMeta": {},
-	"optionalDependencies": {},
 	"bundleDependencies": [],
 	"devDependencies": {
 		"@clevercanyon/skeleton-dev-deps": "^1.0.121"
 	},
 	"overrides": {},
 	"workspaces": [],
-	"cpu": ["x64", "arm64"],
-	"os": ["darwin", "linux"],
+	"cpu": [
+		"x64",
+		"arm64"
+	],
+	"os": [
+		"darwin",
+		"linux"
+	],
 	"engines": {
 		"node": "^19.2.0 || ^19.4.0",
 		"npm": "^8.19.3 || ^9.2.0"
