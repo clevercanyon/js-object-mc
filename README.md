@@ -525,8 +525,8 @@ For example, here's an already-defined operation handler that could be customize
 
 ```js
 const previous = mc.addOperation('$concat', (source, params, separator = '.') => {
-	if (!source || !mc.u.isObject(source)) {
-		throw new Error('Invalid $' + ('ꓺ' === separator ? 'ꓺ' : '') + 'concat. Requires an object source.');
+	if (!source || !this.u.isObject(source)) {
+		throw new Error('Invalid $' + ('ꓺ' === separator ? 'ꓺ' : '') + 'concat. Requires object source.');
 	}
 	if (!params || !mc.u.isObject(params) || Array.isArray(params)) {
 		throw new Error('Invalid $' + ('ꓺ' === separator ? 'ꓺ' : '') + 'concat params. Expecting non-array object.');
@@ -536,7 +536,7 @@ const previous = mc.addOperation('$concat', (source, params, separator = '.') =>
 
 	for (const path of paths) {
 		const value = values[path];
-		let array = mc.u.get(source, path, [], separator);
+		const array = mc.u.get(source, path, [], separator);
 
 		if (!Array.isArray(array)) {
 			throw new Error('Cannot concat onto non-array value.');
@@ -656,31 +656,31 @@ Clones any given value. This is loosely based on the structured clone algorithm.
 ```js
 // Shallow.
 
-const arr = ['a', 'b', ['c']];
-const arrClone = mc.u.clone(arr);
-console.log(arr, arrClone); // [ 'a', 'b', [ 'c' ] ] [ 'a', 'b', [ 'c' ] ]
-console.log(arr === arrClone); // false
-console.log(arr[2] === arrClone[2]); // true
+const arr1 = ['a', 'b', ['c']];
+const arr1Clone = mc.u.clone(arr1);
+console.log(arr1, arr1Clone); // [ 'a', 'b', [ 'c' ] ] [ 'a', 'b', [ 'c' ] ]
+console.log(arr1 === arr1Clone); // false
+console.log(arr1[2] === arr1Clone[2]); // true
 
-const obj = { a: 'a', b: { c: 'c' } };
-const objClone = mc.u.clone(obj);
-console.log(obj, objClone); // { a: 'a', b: { c: 'c' } } { a: 'a', b: { c: 'c' } }
-console.log(obj === objClone); // false
-console.log(obj.b === objClone.b); // true
+const obj1 = { a: 'a', b: { c: 'c' } };
+const obj1Clone = mc.u.clone(obj1);
+console.log(obj1, obj1Clone); // { a: 'a', b: { c: 'c' } } { a: 'a', b: { c: 'c' } }
+console.log(obj1 === obj1Clone); // false
+console.log(obj1.b === obj1Clone.b); // true
 
 // Deep clones.
 
-const arr = ['a', 'b', ['c']];
-const arrClone = mc.u.clone(arr, true);
-console.log(arr, arrClone); // [ 'a', 'b', [ 'c' ] ] [ 'a', 'b', [ 'c' ] ]
-console.log(arr === arrClone); // false
-console.log(arr[2] === arrClone[2]); // false
+const arr2 = ['a', 'b', ['c']];
+const arr2Clone = mc.u.clone(arr2, true);
+console.log(arr2, arr2Clone); // [ 'a', 'b', [ 'c' ] ] [ 'a', 'b', [ 'c' ] ]
+console.log(arr2 === arr2Clone); // false
+console.log(arr2[2] === arr2Clone[2]); // false
 
-const obj = { a: 'a', b: { c: 'c' } };
-const objClone = mc.u.clone(obj, true);
-console.log(obj, objClone); // { a: 'a', b: { c: 'c' } } { a: 'a', b: { c: 'c' } }
-console.log(obj === objClone); // false
-console.log(obj.b === objClone.b); // false
+const obj2 = { a: 'a', b: { c: 'c' } };
+const obj2Clone = mc.u.clone(obj2, true);
+console.log(obj2, obj2Clone); // { a: 'a', b: { c: 'c' } } { a: 'a', b: { c: 'c' } }
+console.log(obj2 === obj2Clone); // false
+console.log(obj2.b === obj2Clone.b); // false
 ```
 
 ### `mc.u.splitObjPath(path, separator = '.')`
@@ -706,22 +706,26 @@ Attempts to convert a value into an operable value (i.e., an object that `merge-
 
 ```js
 class Custom1 {
+	values: {};
+
 	constructor(values = {}) {
 		this.values = values;
 	}
 	toJSON() {
-		return this.values;
+		return this.values; // Reference (good).
 	}
 }
 class Custom2 {
+	values: {};
+
 	constructor(values = {}) {
 		this.values = values;
 	}
 	[mc.methods.toOperable]() {
-		return this.values;
+		return this.values; // Reference (good).
 	}
 	toJSON() {
-		return { foo: 'foo' };
+		return { ...this.values }; // Copy, not a reference (bad).
 	}
 }
 function Custom3(values = {}) {
@@ -730,22 +734,22 @@ function Custom3(values = {}) {
 	}
 }
 
-const obj = mc.u.toOperable({ a: 'a', b: 'b', c: 'c' });
+console.log(mc.u.toOperable({ a: 'a', b: 'b', c: 'c' }));
 // => Returns same operable plain object value: { a: 'a', b: 'b', c: 'c' }
 
-const url = mc.u.toOperable(new URL('https://foo/'));
+console.log(mc.u.toOperable(new URL('https://foo/')));
 // => Not possible. Returns same URL instance, which is not operable.
 
-const date = mc.u.toOperable(new Date('2021-01-07T19:10:21.759Z'));
+console.log(mc.u.toOperable(new Date('2021-01-07T19:10:21.759Z')));
 // => Not possible. Returns same Date instance, which is not operable.
 
-const custom1 = mc.u.toOperable(new Custom1({ a: 'a', b: 'b', c: 'c' }));
+console.log(mc.u.toOperable(new Custom1({ a: 'a', b: 'b', c: 'c' })));
 // => Returns operable value: { a: 'a', b: 'b', c: 'c' } ... via `.toJSON()`.
 
-const custom2 = mc.u.toOperable(new Custom2({ a: 'a', b: 'b', c: 'c' }));
+console.log(mc.u.toOperable(new Custom2({ a: 'a', b: 'b', c: 'c' })));
 // => Returns operable value: { a: 'a', b: 'b', c: 'c' } ... via `.[mc.methods.toOperable]()`.
 
-const custom3 = mc.u.toOperable(new Custom3({ a: 'a', b: 'b', c: 'c' }));
+console.log(mc.u.toOperable(new Custom3({ a: 'a', b: 'b', c: 'c' })));
 // => It's not possible to convert Custom3 with this utility as it doesn't offer
 //    an `.[mc.methods.toOperable]()` or `.toJSON()` method for conversion. However,
 //    it's still considered operable, because it already has its own enumerable

@@ -132,11 +132,19 @@ const u = {
 	 */
 	splitObjPath: (path, separator = '.') => {
 		if (typeof path === 'number') {
-			path = isNaN(path) || Infinity === path || path < 0 ? [] : [path];
-
+			if (isNaN(path) || Infinity === path || path < 0) {
+				throw new Error('Invalid object path notation.');
+			} else {
+				path = [path]; // Array index.
+			}
 		} else if (typeof path === 'string' && /^\[[0-9]+\]$/u.test(path)) {
-			path = [Number(path.slice(1, -1))]; // Array index.
+			path = Number(path.slice(1, -1));
 
+			if (isNaN(path) || Infinity === path || path < 0) {
+				throw new Error('Invalid object path notation.');
+			} else {
+				path = [path]; // Array index.
+			}
 		} else if (typeof path === 'string') {
 			if (path.startsWith(separator)) {
 				path = path.slice(separator.length);
@@ -145,12 +153,19 @@ const u = {
 				path = path.slice(0, -separator.length);
 			}
 			if (/[\[\]]/u.test(separator)) {
-				throw new Error('Invalid object path separator. Cannot use `[` or `]`.');
+				throw new Error('Invalid object path notation separator. Cannot use `[` or `]`.');
 			}
-			const regExp = new RegExp('(' + separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '|\[[0-9]+\])');
+			const regExp = new RegExp('(' + separator.replace(/[.*+?^${}()|[\]\\]/ug, '\\$&') + '|\\[[0-9]+\\])');
 
-			path = path.split(regExp).filter((v) => '' !== v && separator !== v).map((pathPart) => {
-				return /^\[[0-9]+\]$/u.test(pathPart) ? Number(pathPart.slice(1, -1)) : pathPart;
+			path = path.split(regExp).filter((v) => '' !== v && separator !== v).map((part) => {
+				if (/^\[[0-9]+\]$/u.test(part)) {
+					part = Number(part.slice(1, -1)); // Array index.
+
+					if (isNaN(part) || Infinity === part || part < 0) {
+						throw new Error('Invalid object path notation.');
+					}
+				}
+				return part;
 			});
 		}
 		if (!Array.isArray(path)) {

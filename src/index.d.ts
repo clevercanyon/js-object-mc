@@ -11,9 +11,9 @@ export type Kinds = {
 	UPDATE: 'update';
 };
 export type Methods = {
+	toOperable: unique symbol;
 	toPlain: unique symbol;
 	toFlat: unique symbol;
-	toOperation: unique symbol;
 };
 export type Utilities = {
 	type: (value: unknown) => string;

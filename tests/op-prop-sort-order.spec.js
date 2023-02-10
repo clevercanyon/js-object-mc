@@ -16,6 +16,53 @@ describe('Test mc.merge() with $propSortOrder', () => {
 			JSON.stringify({a: 'a', b: 'b', c: 'c'}, null, 4)
 		);
 	});
+	test('$propSortOrder from README file', () => {
+		const obj1 = {
+			prop3: {
+				c: {
+					d: 'd',
+				},
+				b: 'b',
+				e: undefined,
+			},
+			prop00: '00',
+			prop1: ['a', 'b', 'c'],
+			a: 'a',
+			prop2: ['a', 'b', 'c'],
+		};
+		const obj2 = {
+			prop4: '4',
+			$propSortOrder: [
+				'a',
+				'prop0',
+				'prop1',
+				'prop2',
+				'prop3.b',
+				'prop3.c.d',
+				'prop3.e', // Undefined. Will not appear in sorted object.
+				'prop4',
+			],
+			prop0: '0',
+			prop00: '00', // Not in sort order given, so comes after all others.
+		};
+		const merged = mc.merge(obj1, obj2);
+		expect(JSON.stringify(merged, null, 4)).toBe(
+			JSON.stringify({
+				"a": "a",
+				"prop0": "0",
+				"prop1": ["a", "b", "c"],
+				"prop2": ["a", "b", "c"],
+				"prop3": {
+					"b": "b",
+					"c": {
+						"d": "d"
+					}
+				},
+				"prop4": "4",
+				"prop00": "00"
+			}, null, 4)
+		);
+	});
 	test('$ꓺdefault with $ꓺpropSortOrder', () => {
 		const obj1 = {};
 		const obj2 = {

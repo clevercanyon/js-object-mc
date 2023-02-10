@@ -271,7 +271,7 @@ MergeChange.prototype.operation = function (source, operation, params) {
  */
 MergeChange.prototype.operation$set = function (source, params, separator = '.') {
 	if (!source || !this.u.isObject(source)) {
-		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'set. Requires an object source.');
+		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'set. Requires object source.');
 	}
 	if (!params || !this.u.isObject(params) || Array.isArray(params)) {
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'set params. Expecting non-array object.');
@@ -298,7 +298,7 @@ MergeChange.prototype.operation$ꓺset = function(source, params, separator = '�
  */
 MergeChange.prototype.operation$unset = function (source, params, separator = '.') {
 	if (!source || !this.u.isObject(source)) {
-		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'unset. Requires an object source.');
+		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'unset. Requires object source.');
 	}
 	if (!params || !Array.isArray(params)) {
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'unset params. Expecting array.');
@@ -324,7 +324,7 @@ MergeChange.prototype.operation$ꓺunset = function(source, params, separator = 
  */
 MergeChange.prototype.operation$leave = function (source, params, separator = '.') {
 	if (!source || !this.u.isObject(source)) {
-		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'leave. Requires an object source.');
+		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'leave. Requires object source.');
 	}
 	if (!params || !Array.isArray(params)) {
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'leave params. Expecting array.');
@@ -375,7 +375,7 @@ MergeChange.prototype.operation$ꓺleave = function(source, params, separator = 
  */
 MergeChange.prototype.operation$push = function (source, params, separator = '.') {
 	if (!source || !this.u.isObject(source)) {
-		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'push. Requires an object source.');
+		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'push. Requires object source.');
 	}
 	if (!params || !this.u.isObject(params) || Array.isArray(params)) {
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'push params. Expecting non-array object.');
@@ -409,7 +409,7 @@ MergeChange.prototype.operation$ꓺpush = function(source, params, separator = '
  */
 MergeChange.prototype.operation$pull = function (source, params, separator = '.') {
 	if (!source || !this.u.isObject(source)) {
-		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'pull. Requires an object source.');
+		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'pull. Requires object source.');
 	}
 	if (!params || !this.u.isObject(params) || Array.isArray(params)) {
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'pull params. Expecting non-array object.');
@@ -449,7 +449,7 @@ MergeChange.prototype.operation$ꓺpull = function(source, params, separator = '
  */
 MergeChange.prototype.operation$concat = function (source, params, separator = '.') {
 	if (!source || !this.u.isObject(source)) {
-		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'concat. Requires an object source.');
+		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'concat. Requires object source.');
 	}
 	if (!params || !this.u.isObject(params) || Array.isArray(params)) {
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'concat params. Expecting non-array object.');
@@ -459,7 +459,7 @@ MergeChange.prototype.operation$concat = function (source, params, separator = '
 
 	for (const path of paths) {
 		const value = values[path];
-		let array = this.u.get(source, path, [], separator);
+		const array = this.u.get(source, path, [], separator);
 
 		if (!Array.isArray(array)) {
 			throw new Error('Cannot concat onto non-array value.');
@@ -482,7 +482,7 @@ MergeChange.prototype.operation$ꓺconcat = function(source, params, separator =
  */
 MergeChange.prototype.operation$default = function (source, params, separator = '.') {
 	if (!source || !this.u.isObject(source)) {
-		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'default. Requires an object source.');
+		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'default. Requires object source.');
 	}
 	if (!params || !this.u.isObject(params) || Array.isArray(params)) {
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'default params. Expecting non-array object.');
@@ -498,8 +498,8 @@ MergeChange.prototype.operation$default = function (source, params, separator = 
 MergeChange.prototype.operation$ꓺdefault = function(source, params, separator = 'ꓺ') {
 	return this.operation$default(source, params, separator);
 }
-MergeChange.prototype.operation$defaults = MergeChange.prototype.operation$default;   // Alias.
-MergeChange.prototype.operation$ꓺdefaults = MergeChange.prototype.operation$ꓺdefault; // Alias.
+MergeChange.prototype.operation$defaults = MergeChange.prototype.operation$default;
+MergeChange.prototype.operation$ꓺdefaults = MergeChange.prototype.operation$ꓺdefault;
 
 /**
  * Performs declarative operation: `$propSortOrder`.
@@ -513,8 +513,8 @@ MergeChange.prototype.operation$ꓺdefaults = MergeChange.prototype.operation$�
  *       as it is not currently possible to apply proper sorting logic otherwise.
  */
 MergeChange.prototype.operation$propSortOrder = function (source, params, separator = '.') {
-	if (this.u.type(source) !== 'Object') {
-		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'propSortOrder. Requires a plain object source.');
+	if (!source || !this.u.isObject(source)) {
+		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'propSortOrder. Requires object source.');
 	}
 	if (!params || !Array.isArray(params)) {
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'propSortOrder params. Expecting array.');
@@ -529,9 +529,7 @@ MergeChange.prototype.operation$propSortOrder = function (source, params, separa
 		if (undefined !== value) this.u.set(source, path, value, separator);
 	}
 	for (const [path, value] of Object.entries(this.u.toFlat(origSource, '', separator))) {
-		if (undefined !== value && undefined === this.u.get(source, path, undefined, separator)) {
-			this.u.set(source, path, value, separator);
-		}
+		if (undefined !== value) this.u.defaultTo(source, path, value, separator);
 	}
 	return paths.length > 0;
 }
