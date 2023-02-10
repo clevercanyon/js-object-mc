@@ -167,7 +167,9 @@ MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
  * @returns {Array}
  */
 MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
-	return this.KINDS.MERGE === kind ? second.map(value => this[kind](undefined, value)) : second;
+	return this.KINDS.MERGE === kind
+		? second.map(value => this[kind](undefined, value))
+		: second;
 }
 
 /**
@@ -180,7 +182,9 @@ MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
  * @returns {Array}
  */
 MergeChange.prototype.mergeUndefinedArray = function (first, second, kind) {
-	return this.KINDS.MERGE === kind ? this[kind]([], second) : second;
+	return this.KINDS.MERGE === kind
+		? this[kind]([], second)
+		: second;
 }
 
 /**
@@ -193,7 +197,9 @@ MergeChange.prototype.mergeUndefinedArray = function (first, second, kind) {
  * @returns {Object}
  */
 MergeChange.prototype.mergeUndefinedObject = function (first, second, kind) {
-	return this.KINDS.MERGE === kind ? this[kind]({}, second) : this[kind](second, this.extractOperations(second));
+	return this.KINDS.MERGE === kind
+		? this[kind]({}, second)
+		: this[kind](second, this.extractOperations(second));
 }
 
 /**
@@ -207,9 +213,16 @@ MergeChange.prototype.mergeUndefinedObject = function (first, second, kind) {
  */
 MergeChange.prototype.mergeAnyAny = function (first, second, kind) {
 	if (undefined === second) {
-		return this.KINDS.MERGE === kind && first && this.u.isObject(first) ? this.u.clone(first, true) : first;
+		return this.KINDS.MERGE === kind
+			&& first && this.u.isObject(first)
+			? this.u.clone(first, true)
+			: first;
+	} else {
+		return this.KINDS.MERGE === kind
+			&& second && this.u.isObject(second)
+			? this.u.clone(second, true)
+			: second;
 	}
-	return this.KINDS.MERGE === kind && second && this.u.isObject(second) ? this.u.clone(second, true) : second;
 }
 
 /**
@@ -234,7 +247,7 @@ MergeChange.prototype.isOperation = function (operation, params) {
 MergeChange.prototype.extractOperations = function (value) {
 	const operations = {}; // Intialize.
 
-	if (!value || !this.u.isObject(value)) {
+	if (!value || !this.u.isObject(value) || Array.isArray(value)) {
 		return operations; // Not possible.
 	}
 	for (const key of Object.keys(value)) {
@@ -520,9 +533,9 @@ MergeChange.prototype.operation$propSortOrder = function (source, params, separa
 		throw new Error('Invalid $' + ( 'ꓺ' === separator ? 'ꓺ' : '' ) + 'propSortOrder params. Expecting array.');
 	}
 	const paths = params;
-	const origSource = {...source};
+	const origSource = {...source}; // Potentially an array, which expands into numeric string keys.
 
-	this.u.unset(source, '*'); // Start clean again.
+	this.u.unset(source, '*'); // Start from a clean slate.
 
 	for (const path of paths) {
 		const value = this.u.get(origSource, path, undefined, separator);

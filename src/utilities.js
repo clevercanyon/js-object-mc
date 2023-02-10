@@ -415,17 +415,11 @@ const u = {
 				}
 			}
 		}
-		if ('flat' !== calledAs && value && u.isObject(value)) {
-			if(Array.isArray(value)) {
-				for(let i = 0; i < value.length; i++) {
-					u.toFlat(value[i], '' !== path ? `${path}[${i}]` : `[${i}]`, separator, clearUndefined, calledAs, result);
-				}
-			} else {
-				for (const [key, keyValue] of Object.entries(value)) {
-					u.toFlat(keyValue, '' !== path ? `${path}${separator}${key}` : key, separator, clearUndefined, calledAs, result);
-				}
+		if ('flat' !== calledAs && value && Array.isArray(value)) {
+			for(let i = 0; i < value.length; i++) {
+				u.toFlat(value[i], '' !== path ? `${path}[${i}]` : `[${i}]`, separator, clearUndefined, calledAs, result);
 			}
-		} else if ('flat' === calledAs && value && 'Object' === u.type(value)) {
+		} else if (value && 'Object' === u.type(value)) {
 			for (const [key, keyValue] of Object.entries(value)) {
 				u.toFlat(keyValue, '' !== path ? `${path}${separator}${key}` : key, separator, clearUndefined, calledAs, result);
 			}
@@ -525,9 +519,9 @@ const u = {
 		let flat, result = true; // Initialize.
 
 		if ('match' === calledAs) {
-			flat = u.plain(u.flat(value, '', separator));
+			flat = u.flat(u.plain(value), '', separator);
 		} else {
-			flat = u.toPlain(u.toFlat(value, '', separator), true);
+			flat = u.toFlat(u.toPlain(value, true), '', separator);
 		}
 		data = data && u.isObject(data) ? data : {};
 
