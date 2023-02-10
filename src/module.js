@@ -134,7 +134,7 @@ MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
 			keyResult = this[kind](first[key], second[key]);
 			secondKeys.delete(key);
 		} else {
-			keyResult = this[kind](first[key], undefined);
+			keyResult = this[kind](undefined, first[key]);
 		}
 		hasChanged = hasChanged || keyResult !== first[key];
 		result[key] = keyResult; // By assignment.
