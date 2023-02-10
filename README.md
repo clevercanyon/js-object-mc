@@ -29,10 +29,12 @@ const mc = require('merge-change');
 
 ### Merge
 
-Merge with **deep cloning** without changing the source objects. Great for creating or extending objects.
+Merge with **deep cloning** — without changing the source objects; i.e., this utility returns a deep clone. Great for creating or extending objects deeply. New instances are created deeply with all `...merges` cloned prior to being merged into preceding `source` objects.
+
+Underneath, this uses [\_.clone() in Lodash](https://lodash.com/docs/4.17.15#clone), which supports cloning arrays, array buffers, booleans, date objects, maps, numbers, Object objects, regexes, sets, strings, symbols, and typed arrays. The own enumerable properties of arguments objects are cloned as plain objects. An empty object is returned for uncloneable values such as error objects, functions, DOM nodes, and WeakMaps.
 
 ```js
-mc.merge(source, ...values);
+mc.merge(source, ...merges);
 ```
 
 Example:
@@ -55,14 +57,14 @@ let second = {
 const result = mc.merge(first, second);
 
 // Result is a new merged object clone.
-console.log(result); // { a: { two: 2,  three: 3} }
+console.log(result); // { a: { two: 2, three: 3} }
 console.log(result !== first); // true
 console.log(result !== second); // true
 ```
 
 ### Patch
 
-Merge with **mutation** of the source objects. Nice for patching. New instances will not be created.
+Merge with **mutation** of the source objects, deeply. Nice for patching. New instances will not be created; i.e., each of the `...patches` are simply copied into a preceding `source` object. The `source` objects are mutated by reference, but they will not receive clones. Rather, they receive objects by reference merged in from `...patches`.
 
 ```js
 mc.patch(source, ...patches);
@@ -91,10 +93,10 @@ console.log(result !== second); // true
 
 ### Update
 
-**Immutable merge** - create new instances only if there are diffs (also in inner properties).
+**Immutable merge** - creates new instances, deeply, only if there are diffs. When new instances are created, each of the `...updates` are simply copied into a preceding `source` object. The `source` objects are mutated by reference, but they will not receive clones. Rather, they receive objects by reference merged in from `...updates`.
 
 ```js
-mc.update(source, ...changes);
+mc.update(source, ...updates);
 ```
 
 ```js
@@ -126,11 +128,18 @@ console.log(result.a.sub === first.a.sub); // true
 
 ## Declarative Operations
 
-When merging objects, you can perform declarative operations at the same time. Supported in all merge methods. The syntax is similar to mongodb. The use of `$` as a prefix implies the standard `.` path separator; e.g., `a.b.c[0]` to set `{ a: { b: { c: ['value'] } } }`.. The use of `$ꓺ` implies the use of `ꓺ` ([`\uA4FA`](https://graphemica.com/%EA%93%BA#code)) as a path separator; e.g., `aꓺbꓺc[0]` to set `{ a: { b: { c: ['value'] } } }`.
+Supported in all merge methods. When merging, patching, or updating objects, you can perform declarative operations at the same time. The syntax is similar to mongoDB. Declarative operations can be a massive time-saver supporting lots of extensibility.
+
+### Note:
+
+-   The use of `$` as a prefix implies the standard `.` object path separator.
+    -   e.g., `$set: { 'a.b.c[0]': 'value' }` to set `{ a: { b: { c: ['value'] } } }`.
+-   The use of `$ꓺ` implies the use of `ꓺ` (i.e., [`\uA4FA`](https://graphemica.com/%EA%93%BA#code)) as an object path separator.
+    -   e.g., `$ꓺset: { 'aꓺbꓺc[0]': 'value' }` to set `{ a: { b: { c: ['value'] } } }`.
 
 ### `$set`, `$ꓺset`
 
-To set (or replace) property without deep merge.
+To set (or replace) a property by name or object path.
 
 ```js
 const result = mc.merge(
@@ -145,7 +154,7 @@ const result = mc.merge(
 			a: {
 				three: 3,
 			},
-			'a.two': 20, // Field keys can be a path.
+			'a.two': 20, // Keys can be an object path.
 		},
 	},
 );
@@ -165,7 +174,7 @@ Result:
 
 ### `$unset`, `$ꓺunset`
 
-To unset properties by name (or path)
+To unset properties by name or object path.
 
 ```js
 const result = mc.merge(
@@ -192,7 +201,7 @@ Result:
 }
 ```
 
-#### To unset all fields use `*`.
+To unset all keys use `*`.
 
 ```js
 const result = mc.merge(
@@ -219,7 +228,7 @@ Result:
 
 ### `$leave`, `$ꓺleave`
 
-To leave properties by name (or path). All other properties will be removed.
+To leave properties by name or object path. Implies all other properties should be unset.
 
 ```js
 const result = mc.merge(
@@ -251,7 +260,9 @@ Result:
 
 ### `$push`, `$ꓺpush`
 
-To push one value to an array. The source property must be an array.
+To push an item **_as one value_** (be careful) onto an array. The source value must be an array.
+
+-   To push multiple values, please see: `$concat`, `$ꓺconcat`.
 
 ```js
 const result = mc.merge(
@@ -285,7 +296,7 @@ Result:
 
 ### `$pull`, `$ꓺpull`
 
-To pull values from an array. The source property must be an array.
+To pull (remove) values from an array. The source value must be an array.
 
 ```js
 const result = mc.merge(
@@ -319,7 +330,9 @@ Result:
 
 ### `$concat`, `$ꓺconcat`
 
-To concatenate arrays. The source property must be an array.
+To concatenate arrays (e.g., to push multiple items). The source value must be an array.
+
+-   To push a single item, please see: `$push`, `$ꓺpush`.
 
 ```js
 const result = mc.merge(
@@ -350,7 +363,7 @@ Result:
 
 ### `$default`, `$ꓺdefault`
 
-To set default values. The source property must be an object.
+To set default values (i.e., set only if undefined). The source value must be an object.
 
 ```js
 const result = mc.merge(
@@ -403,7 +416,9 @@ Result:
 
 ### `$propSortOrder`, `$ꓺpropSortOrder`
 
-Sorts object properties using order given. The source property must be an object.
+To sort object properties using a given order. The source value must be an object.
+
+-   **Important note:** Please be aware. This also has the side-effect of clearing all `undefined` properties from an object, as it is not currently possible, given strategy applied, to apply proper sorting logic otherwise.
 
 ```js
 const result = mc.merge(
@@ -472,7 +487,7 @@ You can declare a new merge handler for custom types and/or override default log
     -   `second`: Second value for merge. Of type `type2` passed to `mc.addMerge()`.
     -   `kind`: Merge kind. One of: `merge`, `patch`, or `update`.
 
-For example, if you always need to union arrays, you can declare a method to merge `Array` with `Array`. Please be sure to restore the original handler to avoid conflicts with other packages depending on `merge-change`. Alternatively, you can create an entirely separate instance to isolate your customizations; e.g., `mc = mc.newInstance()`. Then add your custom merge handlers to the new instance.
+For example, if you always need to union arrays, you can declare a method to merge `Array` with `Array`. Please be sure to restore the original handler to avoid conflicts with other packages depending on `merge-change`. **Alternatively**, you can create an entirely **separate instance** to isolate your customizations; e.g., `mc = mc.newInstance()`. Then add your custom merge handlers to the new instance, and use the new instance to perform your merges.
 
 ```js
 const previous = mc.addMerge('Array', 'Array', function (first, second, kind) {
@@ -506,14 +521,14 @@ You can declare a new handler for a declarative operation and/or override defaul
     -   `source`: Value the operation should act upon.
     -   `params`: Value of operator; e.g., `$concat: [params]`.
 
-For example, here's an already-defined operation handler that could be customized to meet the needs of different use cases. Also consider giving your operations unique names or prefixing all of your custom operations to avoid conflicts with other packages depending on `merge-change`. Alternatively, you can create an entirely separate instance to isolate your customizations; e.g., `mc = mc.newInstance()`. Then add your custom operation handlers to the new instance.
+For example, here's an already-defined operation handler that could be customized to meet the needs of different use cases. Also consider giving your operations unique names or prefixing all of your custom operations to avoid conflicts with other packages depending on `merge-change`. **Alternatively**, you can create an entirely **separate instance** to isolate your customizations; e.g., `mc = mc.newInstance()`. Then add your custom operation handlers to the new instance, and use the new instance to perform your merges.
 
 ```js
 const previous = mc.addOperation('$concat', (source, params, separator = '.') => {
-	if (!source || !u.isObject(source)) {
+	if (!source || !mc.u.isObject(source)) {
 		throw new Error('Invalid $' + ('ꓺ' === separator ? 'ꓺ' : '') + 'concat. Requires an object source.');
 	}
-	if (!params || !u.isObject(params) || Array.isArray(params)) {
+	if (!params || !mc.u.isObject(params) || Array.isArray(params)) {
 		throw new Error('Invalid $' + ('ꓺ' === separator ? 'ꓺ' : '') + 'concat params. Expecting non-array object.');
 	}
 	const values = params;
@@ -526,8 +541,7 @@ const previous = mc.addOperation('$concat', (source, params, separator = '.') =>
 		if (!Array.isArray(array)) {
 			throw new Error('Cannot concat onto non-array value.');
 		}
-		array = array.concat(value);
-		mc.u.set(source, path, array, separator);
+		mc.u.set(source, path, array.concat(value), separator);
 	}
 	return paths.length > 0; // Updates occured?
 });
@@ -544,7 +558,7 @@ mc.addOperation('$concat', previous);
 
 ### `mc.u.type(value)`
 
-Gets real type of any value. The return value is a string - the name of the constructor.
+Gets real type of any value. The return value is a string; i.e., name of constructor.
 
 ```js
 console.log(mc.u.type(null)); // 'Null'
@@ -557,7 +571,7 @@ console.log(mc.u.type(new URL('https://foo'))); // 'URL'
 
 ### `mc.u.types(value)`
 
-Gets real types of any value. The return value is an array - the names of own or inherited the constructors.
+Gets real types of any value. The return value is an array; i.e., names of own or inherited constructors.
 
 > The legacy `mc.u.typeList()` utility remains and is identical.
 
@@ -584,17 +598,206 @@ console.log(mc.u.hasType(new URL('https://foo'), 'URL')); // true
 console.log(mc.u.hasType(new URL('https://foo'), 'Object')); // true
 ```
 
+### `mc.u.equals(valueA, valueB)`
+
+Tests strict equality.
+
+> The legacy `mc.u.equal()` utility remains and is identical.
+
+```js
+const obj1 = {};
+const obj2 = {};
+
+console.log(mc.u.equals('1', 1)); // false
+console.log(mc.u.equals('A', 'A')); // true
+console.log(mc.u.equals(obj1, obj1)); // true
+console.log(mc.u.equals(obj1, obj2)); // false
+console.log(mc.u.equals(obj2, obj2)); // true
+```
+
+### `mc.u.isObject(value)`
+
+Checks if value is the language type of Object; e.g., arrays, functions, objects, regexes, `new Number(0)`, `new String('')`.
+
+```js
+console.log(mc.u.isObject(null)); // false
+console.log(mc.u.isObject(void 0)); // false
+console.log(mc.u.isObject(undefined)); // false
+console.log(mc.u.isObject(0)); // false
+console.log(mc.u.isObject(String(''))); // false
+console.log(mc.u.isObject(Number(0))); // false
+console.log(mc.u.isObject('')); // false
+console.log(mc.u.isObject({})); // true
+console.log(mc.u.isObject(new Object())); // true
+console.log(mc.u.isObject(() => void 0)); // true
+console.log(mc.u.isObject(new URL('https://foo/'))); // true
+console.log(mc.u.isObject(new Number(0))); // true
+console.log(mc.u.isObject(new String(''))); // true
+```
+
+### `mc.u.isPrototypePollutionKey(key)`
+
+Checks if setting a specific property key would alter an object’s prototype.
+
+```js
+console.log(mc.u.isPrototypePollutionKey('foo')); // false
+console.log(mc.u.isPrototypePollutionKey('__proto__')); // true
+console.log(mc.u.isPrototypePollutionKey('__pRotO__')); // true
+console.log(mc.u.isPrototypePollutionKey('prototype')); // true
+console.log(mc.u.isPrototypePollutionKey('proTotYpe')); // true
+console.log(mc.u.isPrototypePollutionKey('constructor')); // true
+console.log(mc.u.isPrototypePollutionKey('ConstRuCtor')); // true
+```
+
+### `mc.u.clone(value, deep = false)`
+
+Clones any given value. This is loosely based on the structured clone algorithm. Underneath, this uses [\_.clone() in Lodash](https://lodash.com/docs/4.17.15#clone), which supports cloning arrays, array buffers, booleans, date objects, maps, numbers, Object objects, regexes, sets, strings, symbols, and typed arrays. The own enumerable properties of arguments objects are cloned as plain objects. An empty object is returned for uncloneable values such as error objects, functions, DOM nodes, and WeakMaps.
+
+```js
+// Shallow.
+
+const arr = ['a', 'b', ['c']];
+const arrClone = mc.u.clone(arr);
+console.log(arr, arrClone); // [ 'a', 'b', [ 'c' ] ] [ 'a', 'b', [ 'c' ] ]
+console.log(arr === arrClone); // false
+console.log(arr[2] === arrClone[2]); // true
+
+const obj = { a: 'a', b: { c: 'c' } };
+const objClone = mc.u.clone(obj);
+console.log(obj, objClone); // { a: 'a', b: { c: 'c' } } { a: 'a', b: { c: 'c' } }
+console.log(obj === objClone); // false
+console.log(obj.b === objClone.b); // true
+
+// Deep clones.
+
+const arr = ['a', 'b', ['c']];
+const arrClone = mc.u.clone(arr, true);
+console.log(arr, arrClone); // [ 'a', 'b', [ 'c' ] ] [ 'a', 'b', [ 'c' ] ]
+console.log(arr === arrClone); // false
+console.log(arr[2] === arrClone[2]); // false
+
+const obj = { a: 'a', b: { c: 'c' } };
+const objClone = mc.u.clone(obj, true);
+console.log(obj, objClone); // { a: 'a', b: { c: 'c' } } { a: 'a', b: { c: 'c' } }
+console.log(obj === objClone); // false
+console.log(obj.b === objClone.b); // false
+```
+
+### `mc.u.splitObjPath(path, separator = '.')`
+
+Splits an object path notation into an array of parts.
+
+-   With arrays use a `[]` notation to indicate a numeric index; e.g., `[0]`.
+
+> The legacy `mc.u.splitPath()` utility remains and is identical.
+
+```js
+console.log(mc.u.splitObjPath('')); // [ ]
+console.log(mc.u.splitObjPath('a.b.c')); // [ 'a', 'b', 'c' ]
+console.log(mc.u.splitObjPath('a.b.c[0]')); // [ 'a', 'b', 'c', 0 ]
+console.log(mc.u.splitObjPath('a.b.c[0].foo')); // [ 'a', 'b', 'c', 0, 'foo' ]
+console.log(mc.u.splitObjPath('aꓺbꓺc[0]ꓺfoo', 'ꓺ')); // [ 'a', 'b', 'c', 0, 'foo' ]
+console.log(mc.u.splitObjPath('a/b/c[0]/foo', '/')); // [ 'a', 'b', 'c', 0, 'foo' ]
+```
+
+### `mc.u.toOperable(value)`
+
+Attempts to convert a value into an operable value (i.e., an object that `merge-change` can perform declarative operations on). An inoperable value is an object with no enumerable string-keyed properties of its own. It's possible to convert an object into an operable object if it provides an `.[mc.methods.toOperable]()`, or `.toJSON()` method that returns an underlying operable object reference; i.e., an object with its own enumerable string-keyed properties.
+
+```js
+class Custom1 {
+	constructor(values = {}) {
+		this.values = values;
+	}
+	toJSON() {
+		return this.values;
+	}
+}
+class Custom2 {
+	constructor(values = {}) {
+		this.values = values;
+	}
+	[mc.methods.toOperable]() {
+		return this.values;
+	}
+	toJSON() {
+		return { foo: 'foo' };
+	}
+}
+function Custom3(values = {}) {
+	for (const [key, value] of Object.entries(values)) {
+		this[key] = value;
+	}
+}
+
+const obj = mc.u.toOperable({ a: 'a', b: 'b', c: 'c' });
+// => Returns same operable plain object value: { a: 'a', b: 'b', c: 'c' }
+
+const url = mc.u.toOperable(new URL('https://foo/'));
+// => Not possible. Returns same URL instance, which is not operable.
+
+const date = mc.u.toOperable(new Date('2021-01-07T19:10:21.759Z'));
+// => Not possible. Returns same Date instance, which is not operable.
+
+const custom1 = mc.u.toOperable(new Custom1({ a: 'a', b: 'b', c: 'c' }));
+// => Returns operable value: { a: 'a', b: 'b', c: 'c' } ... via `.toJSON()`.
+
+const custom2 = mc.u.toOperable(new Custom2({ a: 'a', b: 'b', c: 'c' }));
+// => Returns operable value: { a: 'a', b: 'b', c: 'c' } ... via `.[mc.methods.toOperable]()`.
+
+const custom3 = mc.u.toOperable(new Custom3({ a: 'a', b: 'b', c: 'c' }));
+// => It's not possible to convert Custom3 with this utility as it doesn't offer
+//    an `.[mc.methods.toOperable]()` or `.toJSON()` method for conversion. However,
+//    it's still considered operable, because it already has its own enumerable
+//    string-keyed properties that can be iterated by declarative operation handlers.
+```
+
 ### `mc.u.toPlain(value, deep = false)`
 
-Converts value to a plain object flattening inherited enumerable string keyed properties of value to own properties of the plain object. To customize conversion, you can define the `[mc.methods.toPlain]()` or `.toJSON()` methods in your object.
+Converts any value to a plain value; i.e., a primitive value, array, or plain object. In the case of an object, by flattening own enumerable string-keyed properties of value to own enumerable string-keyed properties of a plain object. To customize conversion, you can define the `.[mc.methods.toPlain]()` or `.toJSON()` methods in your object.
 
 > The legacy `mc.u.plain(value, deep = true)` utility remains as a deprecated alias with a slightly different strategy, which is somewhat broken, as it only navigates existing plain objects, and is recursive by default. Please migrate to `mc.u.toPlain()` for an improved experience. However, be cautious, as the new utility does not preserve non-plain object structures; i.e., it actually converts any object to a plain object, as one would expect from this utility.
 
 ```js
-const plain = mc.u.toPlain({
-	date: new Date('2021-01-07T19:10:21.759Z'),
-	prop: new Object({ _id: '6010a8c75b9b393070e42e68' }),
-});
+class Custom1 {
+	constructor(values = {}) {
+		this.values = values;
+	}
+	toJSON() {
+		return this.values;
+	}
+}
+class Custom2 {
+	constructor(values = {}) {
+		this.values = values;
+	}
+	[mc.methods.toPlain]() {
+		return this.values;
+	}
+	toJSON() {
+		return { foo: 'foo' };
+	}
+}
+function Custom3(props) {
+	for (const [key, value] of Object.entries(props)) {
+		this[key] = value;
+	}
+}
+const plain = mc.u.toPlain(
+	{
+		foo: 'foo',
+		bar: 1,
+		url: new URL('https://foo/'),
+		date: new Date('2021-01-07T19:10:21.759Z'),
+		object1: new Object({ id: '6010a8c75b9b393070e42e68' }),
+		object2: { a: 'a', b: 'b', c: 'c', d: new Custom1({ a: 'a', b: 'b', c: 'c' }) },
+		custom1: new Custom1({ a: 'a', b: 'b', c: 'c', d: new Custom1({ a: 'a', b: 'b', c: 'c' }) }),
+		custom2: new Custom2({ a: 'a', b: 'b', c: 'c', d: new Custom2({ a: 'a', b: 'b', c: 'c' }) }),
+		custom3: new Custom3({ a: 'a', b: 'b', c: 'c', d: new Custom3({ a: 'a', b: 'b', c: 'c' }) }),
+		customArray: [new Custom1({ a: 'a', b: 'b', c: 'c' }), new Custom2({ a: 'a', b: 'b', c: 'c' })],
+	},
+	true, // Deeply.
+);
 console.log(plain);
 ```
 
@@ -602,14 +805,22 @@ Result (plain).
 
 ```js
 {
-  date: '2021-01-07T19:10:21.759Z',
-  prop: { _id: '6010a8c75b9b393070e42e68' }
+	foo: 'foo',
+	bar: 1,
+	url: {},
+	date: {},
+	object1: { id: '6010a8c75b9b393070e42e68' },
+	object2: { a: 'a', b: 'b', c: 'c', d: { a: 'a', b: 'b', c: 'c' } },
+	custom1: { a: 'a', b: 'b', c: 'c', d: { a: 'a', b: 'b', c: 'c' } },
+	custom2: { a: 'a', b: 'b', c: 'c', d: { a: 'a', b: 'b', c: 'c' } },
+	custom3: { a: 'a', b: 'b', c: 'c', d: { a: 'a', b: 'b', c: 'c' } },
+	customArray: [ { a: 'a', b: 'b', c: 'c' }, { a: 'a', b: 'b', c: 'c' } ],
 }
 ```
 
 ### `mc.u.toFlat(value, path = '', separator = '.', clearUndefined = false)`
 
-Converts a nested structure to a flat object containing inherited enumerable string keyed properties. Property names become paths with `separator`. Arrays use a `[]` notation to represent their numeric index; e.g., `[0]`. To customize conversion, you can define the `[mc.methods.toFlat]()` or `.toJSON()` methods in your object.
+Converts a nested structure to a flat object containing inherited enumerable string keyed properties. Property names become paths with `separator`. Arrays use a `[]` notation to indicate numeric indexes; e.g., `[0]`. To customize conversion, you can define the `.[mc.methods.toFlat]()` or `.toJSON()` methods in your object.
 
 > The legacy `mc.u.flat()` remains as a deprecated alias with a slightly different and somewhat broken strategy, as it does not flatten arrays, and it doesn’t use the Lodash-compatible array `[]` bracket syntax for arrays. Thus, it doesn't actually flatten an object. Migrate to `mc.u.toFlat()` for an improved experience.
 

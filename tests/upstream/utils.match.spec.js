@@ -1,4 +1,4 @@
-const utils = require('../../utilities.js');
+const utils = require('../../src/utilities.js');
 
 describe('Test match()', () => {
 	test('simple', () => {

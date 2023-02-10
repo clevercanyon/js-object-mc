@@ -1,4 +1,4 @@
-const mc = require('../../index.js');
+const mc = require('../../src/index.js');
 
 describe('Test any types', () => {
 	test('undefined + undefined', () => {

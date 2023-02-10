@@ -1,4 +1,4 @@
-const mc = require('../index.js');
+const mc = require('../src/index.js');
 
 describe('Test mc.u.unset()', () => {
 	test('unset property', () => {
@@ -56,6 +56,6 @@ describe('Test mc.u.unset()', () => {
 
 		mc.u.unset(obj, 'j.*');
 		expect('j' in obj).toBe(true);
-		expect(obj.j).toBe(undefined);
+		expect(typeof obj.j).toBe('function');
 	});
 });

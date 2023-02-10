@@ -1,5 +1,5 @@
-const utils = require('../../utilities.js');
-const methods = require('../../methods.js');
+const utils = require('../../src/utilities.js');
+const methods = require('../../src/methods.js');
 
 describe('Test set()', () => {
 	test('set deep property', () => {

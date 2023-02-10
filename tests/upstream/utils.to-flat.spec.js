@@ -1,4 +1,4 @@
-const { utils, methods } = require('../../index.js');
+const { utils, methods } = require('../../src/index.js');
 
 class Custom {
 	constructor(value = {}) {

@@ -3,26 +3,18 @@
  */
 const methods = require('./methods.js');
 
+const _ꓺisObject = require('lodash/isObject');
+const _ꓺclone = require('lodash/clone');
+const _ꓺcloneDeep = require('lodash/cloneDeep');
+
 /**
  * Utilities.
  */
 const u = {
 	/**
-	 * Tests equality.
-	 *
-	 * @param {*} valueA A value to compare.
-	 * @param {*} valueB B value to compare.
-	 *
-	 * @returns {boolean} True if values are equal.
-	 */
-	equals: function (valueA, valueB) {
-		return valueA === valueB;
-	},
-
-	/**
 	 * Gets a value’s object type.
 	 *
-	 * @param {*} value Value of which to get object type.
+	 * @param {*} value Value to get object type of.
 	 *
 	 * @returns {string} Object type; e.g., Null, Undefined, String, Number, Object, etc.
 	 */
@@ -42,7 +34,7 @@ const u = {
 	/**
 	 * Gets a value’s object types.
 	 *
-	 * @param {*} value Value of which to get object types.
+	 * @param {*} value Value to get object types of.
 	 *
 	 * @returns {string[]} Object types; e.g., [Null, Undefined, String, Number, Object, etc].
 	 */
@@ -83,16 +75,27 @@ const u = {
 	},
 
 	/**
+	 * Tests strict equality.
+	 *
+	 * @param {*} valueA A value to compare.
+	 * @param {*} valueB B value to compare.
+	 *
+	 * @returns {boolean} True if values are equal, using strict equality.
+	 */
+	equals: function (valueA, valueB) {
+		return valueA === valueB;
+	},
+
+	/**
 	 * Checks if value is the language type of Object.
-	 * @see https://lodash.com/docs/4.17.15#isObject
 	 *
 	 * @param {*} value Value to test.
 	 *
-	 * @returns {boolean} True if language type of Object.
+	 * @returns {boolean} True if value has a language type of Object.
+	 *
+	 * @see https://lodash.com/docs/4.17.15#isObject
 	 */
-	isObject: (value) => {
-		return null !== value && ['object', 'function'].includes(typeof value);
-	},
+	isObject: (value) => _ꓺisObject(value),
 
 	/**
 	 * Checks if setting a specific property key would alter an object’s prototype.
@@ -107,16 +110,29 @@ const u = {
 	},
 
 	/**
-	 * Splits an object property path notation into an array of parts.
+	 * Clones a value; loosely based on the structured clone algorithm.
 	 *
-	 * @param {string|number|Array<string|number>} path Object property path.
-	 * @param {string} separator Separator used in object property path notation. Default is `.`.
+	 * @param {*} value Value to clone.
+	 * @param {boolean} deep Clone value deeply? Default is `false`.
 	 *
-	 * @returns {Array<string|number>} Object property path parts.
+	 * @returns {*} Clone of input value.
+	 *
+	 * @see https://lodash.com/docs/4.17.15#clone
+	 * @see https://lodash.com/docs/4.17.15#cloneDeep
 	 */
-	splitPath: (path, separator = '.') => {
+	clone: (value, deep = false) => deep ? _ꓺcloneDeep(value) : _ꓺclone(value),
+
+	/**
+	 * Splits an object path notation into an array of parts.
+	 *
+	 * @param {string|number|Array<string|number>} path Object path notation.
+	 * @param {string} separator Separator used in object path notation. Default is `.`.
+	 *
+	 * @returns {Array<string|number>} Object path parts.
+	 */
+	splitObjPath: (path, separator = '.') => {
 		if (typeof path === 'number') {
-			path = [path]; // Array index.
+			path = isNaN(path) || Infinity === path || path < 0 ? [] : [path];
 
 		} else if (typeof path === 'string' && /^\[[0-9]+\]$/u.test(path)) {
 			path = [Number(path.slice(1, -1))]; // Array index.
@@ -128,7 +144,11 @@ const u = {
 			if (path.endsWith(separator)) {
 				path = path.slice(0, -separator.length);
 			}
+			if (/[\[\]]/u.test(separator)) {
+				throw new Error('Invalid object path separator. Cannot use `[` or `]`.');
+			}
 			const regExp = new RegExp('(' + separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '|\[[0-9]+\])');
+
 			path = path.split(regExp).filter((v) => '' !== v && separator !== v).map((pathPart) => {
 				return /^\[[0-9]+\]$/u.test(pathPart) ? Number(pathPart.slice(1, -1)) : pathPart;
 			});
@@ -140,34 +160,23 @@ const u = {
 	},
 
 	/**
-	 * Gets a path’s value from a node.
+	 * Gets an object path’s value from a node.
 	 *
-	 * @param {*} node Node to search for path in.
-	 * @param {string|number|Array<string|number>} path Path in node.
-	 * @param {*} defaultValue Default value if path in node is undefined.
-	 * @param {string} separator Separator used in path notation. Default is `.`.
+	 * @param {*} node Node to search for object path in.
+	 * @param {string|number|Array<string|number>} path Object path in node.
+	 * @param {*} defaultValue Default value if object path in node is undefined.
+	 * @param {string} separator Separator used in object path notation. Default is `.`.
 	 *
-	 * @returns {*} Path’s value in node; else `defaultValue`.
+	 * @returns {*} Object path’s value in node; else `defaultValue`.
 	 */
 	get: (node, path, defaultValue = undefined, separator = '.') => {
-		if (node && u.isObject(node)) {
-			if (typeof node[methods.toOperation] === 'function') {
-				node = node[methods.toOperation]();
-			} else if (typeof node.toJSON === 'function') {
-				node = node.toJSON();
-			}
-		}
+		node = u.toOperable(node);
+
 		if (undefined === node) {
 			return defaultValue;
 		}
-		if (typeof path === 'number') {
-			path = [path];
-		} else if (typeof path === 'string') {
-			path = u.splitPath(path, separator);
-		}
-		if (!Array.isArray(path)) {
-			throw new Error('Invalid object path notation.');
-		}
+		path = u.splitObjPath(path, separator);
+
 		if (0 === path.length) {
 			return node; // End of the line.
 		}
@@ -178,134 +187,130 @@ const u = {
 	},
 
 	/**
-	 * {@see u.set()} with `keepExisting=true`.
+	 * Set an object path’s value within a node.
 	 *
-	 * @note {@see u.set()} for further details.
-	 *
-	 * @returns {*} Revised end-of-path node.
-	 */
-	defaultTo: (node, path, value, separator = '.') => {
-		return u.set(node, path, value, true, separator);
-	},
-
-	/**
-	 * Set a path’s value within a node.
-	 *
-	 * @param {*} node Node to set path value in.
-	 * @param {string|number|Array<string|number>} path Path in node.
-	 * @param {*} value Value of the path within node that's being set.
+	 * @param {*} node Node to set object path value in.
+	 * @param {string|number|Array<string|number>} path Object path in node.
+	 * @param {*} value Value of the object path within node that's being set.
 	 *
 	 * @param {boolean} keepExisting Default is `false`. Whether to override existing value.
 	 *                               If `keepExisting` is passed as a string, it's used as `separator`.
 	 *
-	 * @param {string} separator     Separator used in path notation. Default is `.`.
+	 * @param {string} separator     Separator used in object path notation. Default is `.`.
 	 *                               If `keepExisting` is passed as a string, it's used as `separator`.
-	 *
-	 * @returns {*} Revised end-of-path node.
 	 */
 	set: (node, path, value, keepExisting = false, separator = '.') => {
-		if (node && u.isObject(node)) {
-			if (typeof node[methods.toOperation] === 'function') {
-				node = node[methods.toOperation]();
-			} else if (typeof node.toJSON === 'function') {
-				node = node.toJSON();
-			}
-		}
+		node = u.toOperable(node);
+
 		if(!node || !u.isObject(node)) {
-			return node; // Nothing more to do.
-		}
-		if (typeof path === 'number') {
-			path = [path]; // Array index.
-		} else if (typeof path !== 'string' && !Array.isArray(path)) {
-			throw new Error('Invalid object path notation.');
-		}
-		if (!path /* '0' ok. */ || !path.length) {
-			return node; // Nothing more to do.
+			return; // Nothing more to do.
 		}
 		if (typeof keepExisting === 'string') {
 			separator = keepExisting, keepExisting = false;
 		}
-		if (typeof path === 'string' /* Split and restart. */) {
-			return u.set(node, u.splitPath(path, separator), value, keepExisting, separator);
+		path = u.splitObjPath(path, separator);
+
+		if (0 === path.length) {
+			return; // Nothing more to do.
 		}
-		const currentPath = path[0];
-		const currentValue = node[currentPath]; // Potential prototype.
+		const currentPath = path[0]; // Potential prototype.
+		const currentValue = node[currentPath];
 
 		if (u.isPrototypePollutionKey(currentPath)) {
 			throw new Error('Denying write access to prototype pollution key.');
 		}
 		if (1 === path.length) {
-			if (undefined === currentValue || !keepExisting) {
+			if (!keepExisting || undefined === currentValue) {
 				node[currentPath] = value;
 			}
-			return currentValue;
+		} else {
+			if (undefined === currentValue) node[currentPath] = {};
+			u.set(node[currentPath], path.slice(1), value, keepExisting, separator);
 		}
-		if (undefined === currentValue) {
-			node[currentPath] = {};
-		}
-		return u.set(node[currentPath], path.slice(1), value, keepExisting, separator);
 	},
 
 	/**
-	 * Unsets a path’s value within a node.
+	 * {@see u.set()} with `keepExisting=true`.
 	 *
-	 * @param {*} node Node to unset path value in.
-	 * @param {string|number|Array<string|number>} path Path in node.
-	 * @param {string} separator Separator used in path notation. Default is `.`.
+	 * @note {@see u.set()} for further details.
+	 */
+	defaultTo: (node, path, value, separator = '.') => {
+		u.set(node, path, value, true, separator);
+	},
+
+	/**
+	 * Unsets an object path’s value within a node.
 	 *
-	 * @returns {*} Revised end-of-path node.
+	 * @param {*} node Node to unset object path value in.
+	 * @param {string|number|Array<string|number>} path Object path in node.
+	 * @param {string} separator Separator used in object path notation. Default is `.`.
 	 */
 	unset: (node, path, separator = '.') => {
-		if (node && u.isObject(node)) {
-			if (typeof node[methods.toOperation] === 'function') {
-				node = node[methods.toOperation]();
-			} else if (typeof node.toJSON === 'function') {
-				node = node.toJSON();
-			}
-		}
+		node = u.toOperable(node);
+
 		if(!node || !u.isObject(node)) {
-			return node; // Nothing more to do.
+			return; // Nothing more to do.
 		}
-		if (typeof path === 'number') {
-			path = [path]; // Array index.
-		} else if (typeof path !== 'string' && !Array.isArray(path)) {
-			throw new Error('Invalid object path notation.');
-		}
-		if (!path /* '0' ok. */ || !path.length) {
-			return node; // Nothing more to do.
-		}
-		if (typeof path === 'string') {
-			return u.unset(node, u.splitPath(path, separator), separator);
+		path = u.splitObjPath(path, separator);
+
+		if (0 === path.length) {
+			return; // Nothing more to do.
 		}
 		const currentPath = path[0]; // Potential prototype.
 
 		if (u.isPrototypePollutionKey(currentPath)) {
 			throw new Error('Denying write access to prototype pollution key.');
 		}
-		if ('*' === currentPath /* Plain objects and arrays only. */) {
-			if ('Object' === u.type(node)) {
+		if ('*' === currentPath) {
+			if (Array.isArray(node)) {
+				node.splice(0, node.length);
+			} else {
 				for (const key of Object.keys(node)) {
 					delete node[key];
 				}
-			} else if ('Array' === u.type(node)) {
-				node.splice(0, node.length);
 			}
-			return node;
-		}
-		if (path.length === 1) {
+		} else if (1 === path.length) {
 			if (Array.isArray(node)) {
 				node.splice(currentPath, 1);
 			} else {
 				delete node[currentPath];
 			}
 		} else {
-			if ('*' === path[1] && !['Object', 'Array'].includes(u.type(node[currentPath]))) {
-				node[currentPath] = undefined; // There’s no `*` to iterate, so clearing all in this case.
+			if ('*' === path[1] && (!node[currentPath] || !u.isObject(node[currentPath]))) {
+				node[currentPath] = undefined; // Nothing to iterate, so clear all in this case.
 			} else {
-				return u.unset(node[currentPath], path.slice(1), separator);
+				u.unset(node[currentPath], path.slice(1), separator);
 			}
 		}
-		return node;
+	},
+
+	/**
+	 * Attempts to convert a value into an operable value.
+	 *
+	 * @param {*} value Value to convert to an operable value.
+	 *
+	 * @returns {*} Converted value. Now an operable value.
+	 *
+	 * @note This method intentionally does not run deep, as doing a deep conversion would cause problems.
+	 *       The goal here is to expose an underlying object that's operable, and to retain any object references
+	 *       from within the operable value. Running a deep conversion would break and/or overwrite references.
+	 */
+	toOperable: (value) => {
+		if (!value || !u.isObject(value)) {
+			return value; // Nothing to do.
+		}
+		if (typeof value[methods.toOperable] === 'function') {
+			value = value[methods.toOperable]();
+			//
+		} else if (typeof value.toJSON === 'function') {
+			const jsonValue = value.toJSON();
+
+			// Use JSON only if it produced an object.
+			if (jsonValue && u.isObject(jsonValue)) {
+				value = jsonValue;
+			}
+		}
+		return value;
 	},
 
 	/**
@@ -382,18 +387,16 @@ const u = {
 	 * @returns {*} Flattened value.
 	 */
 	toFlat: (value, path = '', separator = '.', clearUndefined = false, calledAs = '', result = {}) => {
-		let derivedValue = false; // Initialize.
-
 		if (value && u.isObject(value)) {
 			if (typeof value[methods.toFlat] === 'function') {
-				(value = value[methods.toFlat]()), (derivedValue = true);
+				value = value[methods.toFlat]();
 				//
 			} else if (typeof value.toJSON === 'function') {
 				const flatValue = value.toJSON();
 
 				// Use JSON only if it produced an object, or in back compat. mode.
 				if ('flat' === calledAs || (flatValue && u.isObject(flatValue))) {
-					(value = flatValue), (derivedValue = true);
+					value = flatValue;
 				}
 			}
 		}
@@ -442,9 +445,9 @@ const u = {
 
 		if ('Object' === u.type(valuePlain) && 'Object' === u.type(comparePlain)) {
 			for (const key of Object.keys(comparePlain)) {
-				const keyPath = path ? path + separator + key : key;
+				const keyPath = '' !== path ? path + separator + key : key;
 
-				if (!ignore.includes(keyPath) && (white.length === 0 || white.includes(keyPath))) {
+				if (!ignore.includes(keyPath) && (0 === white.length || white.includes(keyPath))) {
 					if (!valuePlain.hasOwnProperty(key)) {
 						if ('ꓺ' === separator) {
 							result.$ꓺset[keyPath] = comparePlain[key];
@@ -458,9 +461,9 @@ const u = {
 			}
 			for (const key of Object.keys(valuePlain)) {
 				if (!comparePlain.hasOwnProperty(key)) {
-					const keyPath = path ? path + separator + key : key;
+					const keyPath = '' !== path ? path + separator + key : key;
 
-					if (!ignore.includes(keyPath) && (white.length === 0 || white.includes(keyPath))) {
+					if (!ignore.includes(keyPath) && (0 === white.length || white.includes(keyPath))) {
 						if ('ꓺ' === separator) {
 							result.$ꓺunset.push(keyPath);
 						} else {
@@ -470,7 +473,7 @@ const u = {
 				}
 			}
 		} else {
-			if (!path /* '0' ok. */) {
+			if ('' === path) {
 				result = compare; // Verbatim.
 			} else {
 				if (!ignore.includes(path) && (0 === white.length || white.includes(path))) {
@@ -504,9 +507,13 @@ const u = {
 	 * @returns {boolean} True if `value` matches `conditions`.
 	 */
 	matches: (value, conditions = {}, data = {}, separator = '.', errors = [], calledAs = '') => {
-		let result = true; // Initialize.
+		let flat, result = true; // Initialize.
 
-		const flat = u.toPlain(u.toFlat(value, '', separator, false, 'match' === calledAs ? 'flat' : ''), true);
+		if ('match' === calledAs) {
+			flat = u.plain(u.flat(value, '', separator));
+		} else {
+			flat = u.toPlain(u.toFlat(value, '', separator), true);
+		}
 		data = data && u.isObject(data) ? data : {};
 
 		if (!flat || !conditions || !u.isObject(flat) || !u.isObject(conditions)) {
@@ -544,23 +551,8 @@ const u = {
 };
 
 /**
- * Deprecations.
+ * Deprecated utilities.
  */
-
-/**
- * @deprecated Use {@see methods.toPlain}.
- */
-u.toPlainMethod = methods.toPlain; // Legacy upstream alias.
-
-/**
- * @deprecated Use {@see methods.toFlat}.
- */
-u.toFlatMethod = methods.toFlat; // Legacy upstream alias.
-
-/**
- * @deprecated Use {@see u.equals()}.
- */
-u.equal = u.equals; // Named `equal` in upstream module.
 
 /**
  * @deprecated Use {@see u.types()}.
@@ -573,6 +565,21 @@ u.typeList = u.types; // Named `typeList` in upstream module.
 u.instanceof = u.hasType; // Named `instanceof` in upstream module.
 
 /**
+ * @deprecated Use {@see u.equals()}.
+ */
+u.equal = u.equals; // Named `equal` in upstream module.
+
+/**
+ * @deprecated Use {@see u.isPrototypePollutionKey()}.
+ */
+u.isPrototypePollutionProp = u._isPrototypePollutionProp = u.isPrototypePollutionKey; // Other names for this in prior versions.
+
+/**
+ * @deprecated Use {@see u.splitObjPath()}.
+ */
+u.splitPath = u.splitObjPath; // Named `splitPath` in upstream module.
+
+/**
  * @deprecated Use {@see u.toPlain()}.
  */
 u.plain = (v, r = true) => u.toPlain(v, r, 'plain'); // Named `plain` in upstream module.
@@ -583,11 +590,6 @@ u.plain = (v, r = true) => u.toPlain(v, r, 'plain'); // Named `plain` in upstrea
 u.flat = u.flatten = (v, p = '', s = '.', c = false) => u.toFlat(v, p, s, c, 'flat'); // Named `flat` in upstream module.
 
 /**
- * @deprecated Use {@see u.isPrototypePollutionKey()}.
- */
-u.isPrototypePollutionProp = u._isPrototypePollutionProp = u.isPrototypePollutionKey; // Other names for this in prior versions.
-
-/**
  * @deprecated Use {@see u.toDiff()}.
  */
 u.diff = (v, c, o) => u.toDiff(v, c, o, 'diff'); // Named `diff` in upstream module.
@@ -596,6 +598,25 @@ u.diff = (v, c, o) => u.toDiff(v, c, o, 'diff'); // Named `diff` in upstream mod
  * @deprecated Use {@see u.matches()}.
  */
 u.match = (v, c = {}, d = {}, s = '.', e = []) => u.matches(v, c, d, s, e, 'match'); // Named `match` in upstream module.
+
+/**
+ * Deprecated methods.
+ */
+
+/**
+ * @deprecated Use {@see methods.toOperable}.
+ */
+u.toOperableMethod = u.toOperationMethod = methods.toOperable; // Legacy upstream approach.
+
+/**
+ * @deprecated Use {@see methods.toPlain}.
+ */
+u.toPlainMethod = methods.toPlain; // Legacy upstream alias.
+
+/**
+ * @deprecated Use {@see methods.toFlat}.
+ */
+u.toFlatMethod = methods.toFlat; // Legacy upstream alias.
 
 /**
  * Module exports.

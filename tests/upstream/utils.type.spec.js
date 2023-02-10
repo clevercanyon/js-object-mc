@@ -1,4 +1,4 @@
-const utils = require('../../index.js').utils;
+const utils = require('../../src/index.js').utils;
 
 describe('Test type()', () => {
 	test('Number', () => {

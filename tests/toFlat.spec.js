@@ -1,4 +1,4 @@
-const mc = require('../index.js');
+const mc = require('../src/index.js');
 
 describe('Test mc.u.toFlat()', () => {
 	test('convert to flat object', () => {

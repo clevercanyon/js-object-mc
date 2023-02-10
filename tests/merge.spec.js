@@ -1,4 +1,4 @@
-const mc = require('../index.js');
+const mc = require('../src/index.js');
 
 describe('Test mc.merge()', () => {
 	test('mc.merge(Object, Object)', () => {
@@ -75,7 +75,7 @@ describe('Test mc.merge()', () => {
 			e: { /* A WeakSet is not cloneable. */ },
 			f: new Map(Object.entries({a: 'a', b: 'b', c: 'c', merged: true})),
 			g: { /* A WeakMap is not cloneable. */ },
-			h: new URL('http://foo/'),
+			h: {},
 		});
 		expect(result.e.f.g[0].h).toBe('merged');
 
@@ -104,7 +104,7 @@ describe('Test mc.merge()', () => {
 
 		const result = mc.merge(obj1, obj2);
 
-		expect(result).toEqual(new URL('http://bar/'));
+		expect(result).toEqual({});
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(false);
 	});
@@ -114,7 +114,7 @@ describe('Test mc.merge()', () => {
 
 		const result = mc.merge(obj1, obj2);
 
-		expect(result).toEqual(new URL('http://bar/'));
+		expect(result).toEqual({});
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(false);
 	});
@@ -124,7 +124,7 @@ describe('Test mc.merge()', () => {
 
 		const result = mc.merge(obj1, obj2);
 
-		expect(result).toEqual(new URL('http://bar/'));
+		expect(result).toEqual({});
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(false);
 	});
