@@ -7,6 +7,9 @@ const _ꓺisObject = require('lodash/isObject');
 const _ꓺclone = require('lodash/clone');
 const _ꓺcloneDeep = require('lodash/cloneDeep');
 
+const structuredClone = globalThis.structuredClone || null;
+const isWeb = typeof Window === 'function' && globalThis instanceof Window;
+
 /**
  * Utilities.
  */
@@ -19,16 +22,7 @@ const u = {
 	 * @returns {string} Object type; e.g., Null, Undefined, String, Number, Object, etc.
 	 */
 	type: function (value) {
-		if (null === value) {
-			return 'Null';
-		}
-		if (undefined === value) {
-			return 'Undefined';
-		}
-		if (!value.__proto__) {
-			return 'Object'; // Plain object type.
-		}
-		return Object.getPrototypeOf(value).constructor.name;
+		return u.types(value)[0];
 	},
 
 	/**
@@ -39,6 +33,7 @@ const u = {
 	 * @returns {string[]} Object types; e.g., [Null, Undefined, String, Number, Object, etc].
 	 */
 	types: (value) => {
+		let collectTypes;
 		let set = new Set();
 
 		if (null === value) {
@@ -51,13 +46,12 @@ const u = {
 			set.add('Object'); // Plain object type.
 
 		} else /* Recursive. */ {
-			function getClassNames(value) {
+			(collectTypes = (value) => {
 				if (value && value.constructor?.name) {
 					set.add(value.constructor.name);
-					getClassNames(Object.getPrototypeOf(value));
+					collectTypes(Object.getPrototypeOf(value));
 				}
-			}
-			getClassNames(Object.getPrototypeOf(value));
+			})(Object.getPrototypeOf(value));
 		}
 		return Array.from(set);
 	},
@@ -117,10 +111,57 @@ const u = {
 	 *
 	 * @returns {*} Clone of input value.
 	 *
+	 * @see https://o5p.me/BTyjw8
 	 * @see https://lodash.com/docs/4.17.15#clone
 	 * @see https://lodash.com/docs/4.17.15#cloneDeep
 	 */
-	clone: (value, deep = false) => deep ? _ꓺcloneDeep(value) : _ꓺclone(value),
+	clone: (value, deep = false) => {
+		const objTypes = u.types(value);
+
+		switch (true) {
+			case ('URL' === objTypes[0]):
+				// Not supported by Lodash or `structuredClone()`.
+				// This is an easy one, so might as well support it here.
+				return new URL(value);
+
+			case (structuredClone && objTypes.includes('Error')):
+				// Not supported by Lodash, but is supported by `structuredClone()`.
+				// See: <https://o5p.me/BTyjw8> for further details.
+				return structuredClone(value);
+
+			case (isWeb && structuredClone && [
+				// Not supported by Lodash, but is supported by `structuredClone()`.
+				// See: <https://o5p.me/BTyjw8> for further details.
+				'AudioData',
+				'Blob',
+				'CropTarget',
+				'CryptoKey',
+				'DOMException',
+				'DOMMatrix',
+				'DOMMatrixReadOnly',
+				'DOMPoint',
+				'DOMPointReadOnly',
+				'DOMQuad',
+				'DOMRect',
+				'DOMRectReadOnly',
+				'File',
+				'FileList',
+				'FileSystemDirectoryHandle',
+				'FileSystemFileHandle',
+				'FileSystemHandle',
+				'GPUCompilationInfo',
+				'GPUCompilationMessage',
+				'ImageBitmap',
+				'ImageData',
+				'RTCCertificate',
+				'VideoFrame',
+			].includes(objTypes[0])):
+				return structuredClone(value);
+
+			default: // Uses Lodash.
+				return deep ? _ꓺcloneDeep(value) : _ꓺclone(value);
+		}
+	},
 
 	/**
 	 * Splits an object path notation into an array of parts.

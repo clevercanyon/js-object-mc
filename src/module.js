@@ -3,6 +3,7 @@
  */
 const u = require('./utilities.js');
 const methods = require('./methods.js');
+const structuredClone = globalThis.structuredClone || null;
 
 /**
  * Class constructor.
@@ -18,12 +19,17 @@ function MergeChange() {
  *
  * @type {Object}
  */
-MergeChange.KINDS = {
-	MERGE: 'merge',  // Deep clone.
-	PATCH: 'patch',  // Change in source value.
-	UPDATE: 'update' // Immutable update (new value if there are diffs).
+MergeChange.kinds = {
+	MERGE: 'merge',
+	MERGE_CLONES: 'mergeClones',
+	MERGE_STRUCTURED_CLONES: 'mergeStructuredClones',
+	PATCH: 'patch',
+	UPDATE: 'update'
 };
-MergeChange.prototype.KINDS = MergeChange.KINDS;
+MergeChange.prototype.kinds = MergeChange.kinds;
+
+MergeChange.KINDS = MergeChange.kinds // Legacy alias.
+MergeChange.prototype.KINDS = MergeChange.kinds; // Legacy alias.
 
 /**
  * Defines special method symbols.
@@ -79,37 +85,84 @@ MergeChange.prototype.prepareMerge = function (kind) {
 }
 
 /**
- * Performs a deep clone merge.
+ * Lossless merge with **deep cloning of arrays and plain objects**.
  *
  * @param {*} first
  * @param {*} second
  * @param {...*} more
  *
  * @returns {*}
+ *
+ * @note See `../README.md` for further details.
  */
-MergeChange.prototype.merge = MergeChange.prototype.prepareMerge(MergeChange.KINDS.MERGE);
+MergeChange.prototype.merge = MergeChange.prototype.prepareMerge(MergeChange.kinds.MERGE);
 
 /**
- * Performs a patch merge.
+ * Lossy merge with **deep cloning of all compatible object types**.
  *
  * @param {*} first
  * @param {*} second
  * @param {...*} more
  *
  * @returns {*}
+ *
+ * @note See `../README.md` for further details.
  */
-MergeChange.prototype.patch = MergeChange.prototype.prepareMerge(MergeChange.KINDS.PATCH);
+MergeChange.prototype.mergeClones = MergeChange.prototype.prepareMerge(MergeChange.kinds.MERGE_CLONES);
 
 /**
- * Performs an immutable merge.
+ * Lossy merge with **deep cloning of all compatible object types**.
  *
  * @param {*} first
  * @param {*} second
  * @param {...*} more
  *
  * @returns {*}
+ *
+ * @note See `../README.md` for further details.
  */
-MergeChange.prototype.update = MergeChange.prototype.prepareMerge(MergeChange.KINDS.UPDATE);
+MergeChange.prototype.mergeStructuredClones = MergeChange.prototype.prepareMerge(MergeChange.kinds.MERGE_STRUCTURED_CLONES);
+
+/**
+ * Lossless merge with **mutation**, by reference, of the source objects, deeply.
+ *
+ * @param {*} first
+ * @param {*} second
+ * @param {...*} more
+ *
+ * @returns {*}
+ *
+ * @note See `../README.md` for further details.
+ */
+MergeChange.prototype.patch = MergeChange.prototype.prepareMerge(MergeChange.kinds.PATCH);
+
+/**
+ * Lossless **immutable merge** that creates new instances deeply, only where there are differences.
+ *
+ * @param {*} first
+ * @param {*} second
+ * @param {...*} more
+ *
+ * @returns {*}
+ *
+ * @note See `../README.md` for further details.
+ */
+MergeChange.prototype.update = MergeChange.prototype.prepareMerge(MergeChange.kinds.UPDATE);
+
+/**
+ * Merges Array with Array.
+ *
+ * @param {Array} first
+ * @param {Array} second
+ * @param {string} kind
+ *
+ * @returns {Array}
+ */
+MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
+	return [this.kinds.MERGE, this.kinds.MERGE_CLONES, this.kinds.MERGE_STRUCTURED_CLONES].includes(kind)
+		? second.map(value => this[kind](undefined, value))
+		: second;
+}
 
 /**
  * Merges Object with Object.
@@ -122,8 +175,8 @@ MergeChange.prototype.update = MergeChange.prototype.prepareMerge(MergeChange.KI
  */
 MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
 	let operableResult; // Initialize.
-	let hasChanged = this.KINDS.MERGE === kind;
-	let result = this.KINDS.PATCH === kind ? first : {};
+	let result = this.kinds.PATCH === kind ? first : {};
+	let hasChanged = [this.kinds.MERGE, this.kinds.MERGE_CLONES, this.kinds.MERGE_STRUCTURED_CLONES].includes(kind);
 
 	const firstKeys = Object.keys(first);
 	const secondKeys = new Set(Object.keys(second));
@@ -158,21 +211,6 @@ MergeChange.prototype.mergeObjectObject = function (first, second, kind) {
 }
 
 /**
- * Merges Array with Array.
- *
- * @param {Array} first
- * @param {Array} second
- * @param {string} kind
- *
- * @returns {Array}
- */
-MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
-	return this.KINDS.MERGE === kind
-		? second.map(value => this[kind](undefined, value))
-		: second;
-}
-
-/**
  * Merges Undefined with Array.
  *
  * @param {undefined} first
@@ -182,7 +220,7 @@ MergeChange.prototype.mergeArrayArray = function (first, second, kind) {
  * @returns {Array}
  */
 MergeChange.prototype.mergeUndefinedArray = function (first, second, kind) {
-	return this.KINDS.MERGE === kind
+	return [this.kinds.MERGE, this.kinds.MERGE_CLONES, this.kinds.MERGE_STRUCTURED_CLONES].includes(kind)
 		? this[kind]([], second)
 		: second;
 }
@@ -197,7 +235,7 @@ MergeChange.prototype.mergeUndefinedArray = function (first, second, kind) {
  * @returns {Object}
  */
 MergeChange.prototype.mergeUndefinedObject = function (first, second, kind) {
-	return this.KINDS.MERGE === kind
+	return [this.kinds.MERGE, this.kinds.MERGE_CLONES, this.kinds.MERGE_STRUCTURED_CLONES].includes(kind)
 		? this[kind]({}, second)
 		: this[kind](second, this.extractOperations(second));
 }
@@ -212,17 +250,17 @@ MergeChange.prototype.mergeUndefinedObject = function (first, second, kind) {
  * @returns {*}
  */
 MergeChange.prototype.mergeAnyAny = function (first, second, kind) {
-	if (undefined === second) {
-		return this.KINDS.MERGE === kind
-			&& first && this.u.isObject(first)
-			? this.u.clone(first, true)
-			: first;
-	} else {
-		return this.KINDS.MERGE === kind
-			&& second && this.u.isObject(second)
-			? this.u.clone(second, true)
-			: second;
+	const value = undefined === second ? first : second;
+
+	if (!value || !this.u.isObject(value)) {
+		return value; // Nothing more to do.
+		//
+	} else if ('function' === typeof this['mergeUndefined' + this.u.type(value)]) {
+		return this[kind](undefined, value);
 	}
+	return this.kinds.MERGE_STRUCTURED_CLONES === kind && structuredClone ? structuredClone(value)
+		: [this.kinds.MERGE_CLONES, this.kinds.MERGE_STRUCTURED_CLONES].includes(kind) ? this.u.clone(value, true)
+		: value;
 }
 
 /**

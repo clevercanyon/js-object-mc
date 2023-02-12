@@ -29,9 +29,9 @@ const mc = require('merge-change');
 
 ### Merge
 
-Merge with **deep cloning** — without changing the source objects; i.e., this utility returns a deep clone. Great for creating or extending objects deeply. New instances are created deeply with all `...merges` cloned prior to being merged into preceding `source` objects.
+Lossless merge with **deep cloning of arrays and plain objects**, and without changing the `source` objects; i.e., this method returns a deep clone of arrays and plain objects. Great for creating or extending objects deeply. New instances are created deeply with all `...merges` being deep-cloned prior to merging into preceding `source` object derivations.
 
-Underneath, this uses [\_.clone() in Lodash](https://lodash.com/docs/4.17.15#clone), which supports cloning arrays, array buffers, booleans, date objects, maps, numbers, Object objects, regexes, sets, strings, symbols, and typed arrays. The own enumerable properties of arguments objects are cloned as plain objects. An empty object is returned for uncloneable values such as error objects, functions, DOM nodes, and WeakMaps.
+-   **Note:** This produces a deep clone of arrays and plain objects only. The `mc.merge()` method is typically the most popular among developers, as it produces a lossless merge. There is no data lost because object types that are not arrays or plain objects are simply transferred in by reference.
 
 ```js
 mc.merge(source, ...merges);
@@ -42,88 +42,334 @@ Example:
 ```js
 import mc from 'merge-change';
 
-let first = {
-	a: {
-		one: true,
-		two: 2,
+let source = {
+	test: {
+		string: '1',
+		integer: 1,
+		boolean: true,
+		url: new URL('https://source.tld/'),
 	},
 };
-let second = {
-	a: {
-		three: 3,
-		$unset: ['one'], // $unset is a declarative operation.
+let merge = {
+	test: {
+		integer: 2,
+		date: new Date('2023-01-01'),
+		url: new URL('https://merge.tld/'),
+		$unset: ['string'], // $unset is a declarative operation.
 	},
 };
-const result = mc.merge(first, second);
+const result = mc.merge(source, merge);
 
-// Result is a new merged object clone.
-console.log(result); // { a: { two: 2, three: 3} }
-console.log(result !== first); // true
-console.log(result !== second); // true
+console.log(result); // A newly merged deep object clone.
+console.log(result !== source); // true
+console.log(result !== merge); // true
+
+// These were simply transferred in by reference.
+console.log(result.test.url === merge.test.url); // true
+console.log(result.test.date === merge.test.date); // true
+```
+
+Result:
+
+```text
+{
+	test: {
+		integer: 2,
+		boolean: true,
+		url: URL {href: 'https://merge.tld/', ...},
+		date: Date {...} 2023-01-01T00:00:00.000Z,
+	},
+}
+```
+
+### Merge Clones
+
+Lossy merge with **deep cloning of _all_ compatible object types**, and without changing the `source` objects; i.e., this method returns the deepest clone possible from `merge-change`. Great for creating or extending objects deeply. New instances are created deeply with all `...merges` being deep-cloned prior to merging into preceding `source` object derivations.
+
+-   **Note:** Underneath, this uses [\_.cloneDeep() from Lodash](https://lodash.com/docs/4.17.15#cloneDeep), which supports cloning arrays, array buffers, booleans, date objects, maps, numbers, plain objects, regexp objects, sets, strings, symbols, and typed arrays. The own enumerable properties of `arguments` objects are cloned as plain objects. A plain empty object is generated for uncloneable object types; e.g., error objects, functions (of any kind), DOM nodes, and WeakMaps, are all unsupported by Lodash.
+
+-   **Note:** For data types not supported by [\_.cloneDeep() from Lodash](https://lodash.com/docs/4.17.15#cloneDeep), and where those types _are_ supported by JavaScript’s native [structuredClone()](https://o5p.me/1MN11X) feature, [structuredClone()](https://o5p.me/1MN11X) is used as a fallback when the current environment supports it. For example, Lodash is unable to clone errors, but JavaScript, in modern environments, can do so natively.
+
+-   **Note:** For object types not supported by [\_.cloneDeep() from Lodash](https://lodash.com/docs/4.17.15#cloneDeep) or by JavaScript’s native [structuredClone()](https://o5p.me/1MN11X) function, `merge-change` itself is capable of reliably generating a clone in _very rare_ cases; e.g., URL objects are cloned by `merge-change` itself.
+
+```js
+mc.mergeClones(source, ...merges);
+```
+
+Example:
+
+```js
+import mc from 'merge-change';
+
+let source = {
+	test: {
+		string: '1',
+		integer: 1,
+		boolean: true,
+		url: new URL('https://source.tld/'),
+	},
+};
+let merge = {
+	test: {
+		integer: 2,
+		date: new Date('2023-01-01'),
+		url: new URL('https://merge.tld/'),
+		$unset: ['string'], // $unset is a declarative operation.
+	},
+};
+const result = mc.mergeClones(source, merge);
+
+console.log(result); // A newly merged deep object clone.
+console.log(result !== source); // true
+console.log(result !== merge); // true
+
+// These were cloned, not simply transferred in by reference.
+console.log(result.test.url !== merge.test.url); // true
+console.log(result.test.date !== merge.test.date); // true
+```
+
+Result:
+
+```text
+{
+	test: {
+		integer: 2,
+		boolean: true,
+		url: URL {href: 'https://merge.tld/', ...},
+		date: Date {...} 2023-01-01T00:00:00.000Z,
+	},
+}
+```
+
+### Merge Structured Clones
+
+Lossy merge with **deep cloning of _all_ compatible object types**, and without changing the `source` objects; i.e., this method returns the deepest clone that native JavaScript is capable of. Great for creating or extending objects deeply. New instances are created deeply with all `...merges` being deep-cloned prior to merging into preceding `source` object derivations.
+
+Underneath, this takes an approach similar to that of `mc.mergeClones()`, only instead of using [\_.cloneDeep() from Lodash](https://lodash.com/docs/4.17.15#cloneDeep), it prioritizes JavaScript’s native [structuredClone()](https://o5p.me/1MN11X) function when it’s supported by the current environment. When supported, no fallbacks are used whatsoever. Everything is up to [structuredClone()](https://o5p.me/1MN11X).
+
+-   **Note:** An error will be thrown by [structuredClone()](https://o5p.me/1MN11X) when uncloneable data types are encountered! There are still quite a few [uncloneable data types](https://o5p.me/DWwtau). Thus, JavaScript’s native [structuredClone()](https://o5p.me/1MN11X) function is currently, as of early 2023, still **inferior** to [\_.cloneDeep() from Lodash](https://lodash.com/docs/4.17.15#cloneDeep). Please consider using `mc.mergeClones()` until JavaScript’s native approach is improved.
+
+-   **Note:** If [structuredClone()](https://o5p.me/1MN11X) is unavailable; e.g., when running in a legacy environment; then [\_.cloneDeep() from Lodash](https://lodash.com/docs/4.17.15#cloneDeep) will be used instead. In such a case, `mc.mergeStructuredClones()` behaves like `mc.mergeClones()`.
+
+```js
+mc.mergeStructuredClones(source, ...merges);
+```
+
+Example:
+
+```js
+import mc from 'merge-change';
+
+let source = {
+	test: {
+		string: '1',
+		integer: 1,
+		boolean: true,
+		url: new URL('https://source.tld/'),
+	},
+};
+let merge = {
+	test: {
+		integer: 2,
+		date: new Date('2023-01-01'),
+		url: new URL('https://merge.tld/'),
+		$unset: ['string'], // $unset is a declarative operation.
+	},
+};
+const result = mc.mergeStructuredClones(source, merge);
+
+console.log(result); // A newly merged deep object clone.
+console.log(result !== source); // true
+console.log(result !== merge); // true
+
+// These were cloned, not simply transferred in by reference.
+console.log(result.test.url !== merge.test.url); // true
+console.log(result.test.date !== merge.test.date); // true
+
+// `structuredClone()` fails to clone a URL object type, returning `{}` instead.
+console.log(mc.u.type(result.test.url)); // Plain 'Object' type.
+
+// `structuredClone()` successfully clones `Date` objects.
+console.log(mc.u.type(result.test.date)); // 'Date' type.
+```
+
+Result:
+
+```text
+{
+	test: {
+		integer: 2,
+		boolean: true,
+		url: Object {},
+		date: Date {...} 2023-01-01T00:00:00.000Z,
+	},
+}
 ```
 
 ### Patch
 
-Merge with **mutation** of the source objects, deeply. Nice for patching. New instances will not be created; i.e., each of the `...patches` are simply copied into a preceding `source` object. The `source` objects are mutated by reference, but they will not receive clones. Rather, they receive objects by reference merged in from `...patches`.
+Lossless merge with **mutation**, by reference, of the source objects, deeply. Nice for patching. New instances will not be created; i.e., each of the `...patches` are simply transferred into a preceding `source` object. The `source` objects are mutated by reference, but they will not receive clones. Rather, they receive objects by reference transferred in from `...patches`.
+
+-   **Note:** Patching of `source` is only effective when the top-level `source` is either an `Array` or plain `Object`, and of the same object type as the top-level of each of the `...updates`. If top-level object types differ, or are not an `Array` or plain `Object`, use the return value of this method instead of relying on `source` to be patched by reference.
 
 ```js
 mc.patch(source, ...patches);
 ```
 
-```js
-let first = {
-	a: {
-		one: true,
-		two: 2,
-	},
-};
-let second = {
-	a: {
-		three: 3,
-		$unset: ['one'], // $unset is a declarative operation.
-	},
-};
-const result = mc.patch(first, second);
+Example:
 
-// Result is a mutated first argument.
-console.log(result); // { a: { two: 2,  three: 3} }
-console.log(result === first); // true
-console.log(result !== second); // true
+```js
+import mc from 'merge-change';
+
+let source = {
+	test: {
+		string: '1',
+		integer: 1,
+		boolean: true,
+		url: new URL('https://source.tld/'),
+	},
+};
+let patch = {
+	test: {
+		integer: 2,
+		date: new Date('2023-01-01'),
+		url: new URL('https://patch.tld/'),
+		$unset: ['string'], // $unset is a declarative operation.
+	},
+};
+const result = mc.patch(source, patch);
+// Or, just: `mc.patch(source, patch)` will suffice,
+// because the `source` object is patched by reference.
+
+// Patched source.
+console.log(result);
+
+// Result is not the patch.
+console.log(result !== patch); // true
+
+// Rather, source was patched by reference.
+console.log(result === source); // true
+
+// These were simply transferred in by reference.
+console.log(result.test.url === patch.test.url); // true
+console.log(result.test.date === patch.test.date); // true
+```
+
+Result:
+
+```text
+{
+	test: {
+		integer: 2,
+		boolean: true,
+		url: URL {href: 'https://patch.tld/', ...},
+		date: Date {...} 2023-01-01T00:00:00.000Z,
+	},
+}
 ```
 
 ### Update
 
-**Immutable merge** - creates new instances, deeply, only if there are diffs. When new instances are created, each of the `...updates` are simply copied into a preceding `source` object. The `source` objects are mutated by reference, but they will not receive clones. Rather, they receive objects by reference merged in from `...updates`.
+Lossless **immutable merge** that creates new instances deeply, only where there are differences, and without changing the `source` objects. When new instances are created, each of the `...updates` are simply transferred into a preceding `source` derivation. The `source` objects are not mutated by reference, because `source` and all `...updates` are treated as immutable objects.
+
+-   **Note:** The resulting object returned by this method will not receive clones. Rather, it receives objects by reference transferred in from derivations coming from `source` and `...updates`, which are all treated as immutable objects.
 
 ```js
 mc.update(source, ...updates);
 ```
 
+Example 1 (**changes do occur in this case**):
+
 ```js
-let first = {
-	a: {
-		one: true,
-		two: 2,
-		sub: {
-			value: 3,
-		},
+import mc from 'merge-change';
+
+let source = {
+	test: {
+		string: '1',
+		integer: 1,
+		boolean: true,
+		url: new URL('https://source.tld/'),
 	},
 };
-let second = {
-	a: {
-		three: 3,
-		$unset: ['one'], // $unset is a declarative operation.
+let update = {
+	test: {
+		integer: 2,
+		date: new Date('2023-01-01'),
+		url: new URL('https://update.tld/'),
+		$unset: ['string'], // $unset is a declarative operation.
 	},
 };
-const result = mc.update(first, second);
+const result = mc.update(source, update);
 
-// Result is a new object.
-console.log(result); // { a: { two: 2, sub: { value: 3 }, three: 3 } }
-console.log(result !== first); // true
-console.log(result !== second); // true
+// Potentially updated source.
+console.log(result); // A new object in this case.
 
-// Object "a.sub" is unchanged.
-console.log(result.a.sub === first.a.sub); // true
+// Result !== source; i.e., because there were changes.
+// This is how you determine if changes occurred following an update.
+console.log(result !== source); // true
+
+// Result is also not the update, just to be clear.
+console.log(result !== update); // true
+
+// These were simply transferred in by reference.
+console.log(result.test.url === update.test.url); // true
+console.log(result.test.date === update.test.date); // true
+```
+
+Result:
+
+```text
+{
+	test: {
+		integer: 2,
+		boolean: true,
+		url: URL {href: 'https://update.tld/', ...},
+		date: Date {...} 2023-01-01T00:00:00.000Z,
+	},
+}
+```
+
+Example 2 (**no changes occur in this case**):
+
+```js
+import mc from 'merge-change';
+
+let source = {
+	test: {
+		string: '1',
+		integer: 1,
+		boolean: true,
+		url: new URL('https://source.tld/'),
+	},
+};
+let update = {
+	test: {
+		string: '1',
+		integer: 1,
+		boolean: true,
+	},
+};
+const result = mc.update(source, update);
+
+// Potentially updated source.
+console.log(result); // The original source in this case.
+
+// Result === source; i.e., because there were no changes.
+// This is how you determine if changes occurred following an update.
+console.log(result === source); // true
+```
+
+Result:
+
+```text
+{
+	test: {
+		string: '1',
+		integer: 1,
+		boolean: true,
+		url: URL {href: 'https://source.tld/', ...},
+	},
+}
 ```
 
 ## Declarative Operations

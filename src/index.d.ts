@@ -1,12 +1,14 @@
-export type PlainObject = { [x: string ]: unknown };
-export type AnyObject = { [x: string | number ]: unknown };
+export type PlainObject = { [x: symbol | string ]: unknown };
+export type AnyObject = { [x: symbol | string | number ]: unknown };
 
 export type ObjectPath = string | number | Array<string | number>;
 export type SplitObjectPath = Array<string | number>;
 
-export type Kind = 'merge' | 'patch' | 'update';
+export type Kind = 'merge' | 'mergeClones' | 'mergeStructuredClones' | 'patch' | 'update';
 export type Kinds = {
 	MERGE: 'merge';
+	MERGE_CLONES: 'mergeClones';
+	MERGE_STRUCTURED_CLONES: 'mergeStructuredClones';
 	PATCH: 'patch';
 	UPDATE: 'update';
 };
@@ -49,18 +51,22 @@ export type MergeCallback = (first: unknown, second: unknown, kind: Kind) => unk
 export type OperationCallback = (source: unknown, params: unknown, separator?: string) => boolean;
 
 declare class MergeChange {
-	KINDS: Kinds;
+	kinds: Kinds;
 	methods: Methods;
 
 	u: Utilities;
 	utils: Utilities;
 	utilities: Utilities;
 
-	constructor(); // Instance.
-	newInstance(): MergeChange; // New instance.
-	prepareMerge(kind: Kind): typeof merge | typeof patch | typeof update;
+	constructor(): MergeChange;
+	newInstance(): MergeChange;
+
+	prepareMerge<T>(kind: T): typeof MergeChange[T];
 
 	merge<T>(source: T, ...merges: unknown): T;
+	mergeClones<T>(source: T, ...merges: unknown): T;
+	mergeStructuredClones<T>(source: T, ...merges: unknown): T;
+
 	patch<T>(source: T, ...patches: unknown): T;
 	update<T>(source: T, ...updates: unknown): T;
 

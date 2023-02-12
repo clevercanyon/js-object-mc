@@ -1,7 +1,7 @@
 const mc = require('../src/index.js');
 
-describe('Test mc.patch()', () => {
-	test('mc.patch(Object, Object)', () => {
+describe('Test mc.update()', () => {
+	test('mc.update(Object, Object)', () => {
 		const obj1 = {
 			a: 'a',
 			b: 'b',
@@ -10,25 +10,25 @@ describe('Test mc.patch()', () => {
 			},
 		};
 		const obj2 = {
-			a: 'patched',
-			b: 'patched',
+			a: 'updated',
+			b: 'updated',
 			c: {
-				d: 'patched',
+				d: 'updated',
 			},
 		};
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toStrictEqual({
-			a: 'patched',
-			b: 'patched',
+			a: 'updated',
+			b: 'updated',
 			c: {
-				d: 'patched',
+				d: 'updated',
 			},
 		});
-		expect(result === obj1).toBe(true);
+		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(false);
 	});
-	test('mc.patch(Object, Object) [from README.md]', () => {
+	test('mc.update(Object, Object) [from README.md]', () => {
 		let source = {
 			test: {
 				string: '1',
@@ -37,31 +37,62 @@ describe('Test mc.patch()', () => {
 				url: new URL('https://source.tld/'),
 			},
 		};
-		let patch = {
+		let update = {
 			test: {
 				integer: 2,
 				date: new Date('2023-01-01'),
-				url: new URL('https://patch.tld/'),
+				url: new URL('https://update.tld/'),
 				$unset: ['string'], // $unset is a declarative operation.
 			},
 		};
-		const result = mc.patch(source, patch);
+		const result = mc.update(source, update);
 
 		expect(result).toStrictEqual({
 			test: {
 				integer: 2,
 				boolean: true,
-				url: new URL('https://patch.tld/'),
+				url: new URL('https://update.tld/'),
 				date: new Date('2023-01-01'),
 			},
 		});
-		expect(result === source).toBe(true);
-		expect(result !== patch).toBe(true);
+		expect(result === source).toBe(false);
+		expect(result !== update).toBe(true);
 
-		expect(result.test.url === patch.test.url).toBe(true);
-		expect(result.test.date === patch.test.date).toBe(true);
+		expect(result.test.url === update.test.url).toBe(true);
+		expect(result.test.date === update.test.date).toBe(true);
 	});
-	test('mc.patch(Object, Object) [complex]', () => {
+	test('mc.update(Object, Object) [also from README.md]', () => {
+		let source = {
+			test: {
+				string: '1',
+				integer: 1,
+				boolean: true,
+				url: new URL('https://source.tld/'),
+			},
+		};
+		let update = {
+			test: {
+				string: '1',
+				integer: 1,
+				boolean: true,
+			},
+		};
+		const result = mc.update(source, update);
+
+		expect(result).toStrictEqual({
+			test: {
+				string: '1',
+				integer: 1,
+				boolean: true,
+				url: new URL('https://source.tld/'),
+			},
+		});
+		expect(result === source).toBe(true);
+		expect(result !== update).toBe(true);
+
+		expect(result.test.url === source.test.url).toBe(true);
+	});
+	test('mc.update(Object, Object) [complex]', () => {
 		class Custom {
 			values = {};
 
@@ -77,10 +108,10 @@ describe('Test mc.patch()', () => {
 				_array: ['array', true],
 				_object: {object: true},
 				_date: new Date('2023-01-01'),
-				_set: new Set(['a', 'b', 'c', 'patched']),
-				_weakSet: new WeakSet([{a: 'a'}, {b: 'b'}, {c: 'c'}, {patched: true}]),
-				_map: new Map(Object.entries({a: 'a', b: 'b', c: 'c', patched: true})),
-				_weakMap: new WeakMap([[{a: 'a'}, 'a'], [{b: 'b'}, 'b'], [{c: 'c'}, 'c'], [{patched: true}, true]]),
+				_set: new Set(['a', 'b', 'c', 'updated']),
+				_weakSet: new WeakSet([{a: 'a'}, {b: 'b'}, {c: 'c'}, {updated: true}]),
+				_map: new Map(Object.entries({a: 'a', b: 'b', c: 'c', updated: true})),
+				_weakMap: new WeakMap([[{a: 'a'}, 'a'], [{b: 'b'}, 'b'], [{c: 'c'}, 'c'], [{updated: true}, true]]),
 				_url: new URL('http://foo/'),
 				_arrayBuffer: new ArrayBuffer(1),
 				_error: new Error(),
@@ -102,17 +133,17 @@ describe('Test mc.patch()', () => {
 			i: [0],
 		};
 		const obj2 = {
-			'1': 'patched',
-			a: { patched: true },
-			b: [ 'patched', true ],
+			'1': 'updated',
+			a: { updated: true },
+			b: [ 'updated', true ],
 			c: {
 				array: ['array', true],
 				object: {object: true},
 				date: new Date('2023-01-01'),
-				set: new Set(['a', 'b', 'c', 'patched']),
-				weakSet: new WeakSet([{a: 'a'}, {b: 'b'}, {c: 'c'}, {patched: true}]),
-				map: new Map(Object.entries({a: 'a', b: 'b', c: 'c', patched: true})),
-				weakMap: new WeakMap([[{a: 'a'}, 'a'], [{b: 'b'}, 'b'], [{c: 'c'}, 'c'], [{patched: true}, true]]),
+				set: new Set(['a', 'b', 'c', 'updated']),
+				weakSet: new WeakSet([{a: 'a'}, {b: 'b'}, {c: 'c'}, {updated: true}]),
+				map: new Map(Object.entries({a: 'a', b: 'b', c: 'c', updated: true})),
+				weakMap: new WeakMap([[{a: 'a'}, 'a'], [{b: 'b'}, 'b'], [{c: 'c'}, 'c'], [{updated: true}, true]]),
 				url: new URL('http://foo/'),
 				arrayBuffer: new ArrayBuffer(1),
 				error: new Error(),
@@ -122,27 +153,27 @@ describe('Test mc.patch()', () => {
 				function: function () { return 'function'; },
 				asyncFunction: async function () { return 'asyncFunction'; },
 			},
-			$set: { 'i[0]': 'patched', 'e.f.g[0].h': 'patched' },
+			$set: { 'i[0]': 'updated', 'e.f.g[0].h': 'updated' },
 		};
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toMatchObject({
-			'1': 'patched',
-			a: { patched: true },
-			b: [ 'patched', true ],
+			'1': 'updated',
+			a: { updated: true },
+			b: [ 'updated', true ],
 			c: expect.any(Object),
 			e: {
 				f: {
 					g: [
 						{
-							h: 'patched'
+							h: 'updated'
 						},
 					],
 				},
 			},
-			i: ['patched'],
+			i: ['updated'],
 		});
-		expect(result === obj1).toBe(true);
+		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(false);
 
 		expect(mc.u.type(result.c._array)).toBe('Array');
@@ -209,91 +240,91 @@ describe('Test mc.patch()', () => {
 		expect(result.c.function === obj2.c.function).toBe(true);
 		expect(result.c.asyncFunction === obj2.c.asyncFunction).toBe(true);
 	});
-	test('mc.patch(undefined, Object)', () => {
+	test('mc.update(undefined, Object)', () => {
 		const obj1 = undefined;
 		const obj2 = {patched: true};
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toStrictEqual({patched: true});
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(true);
 	});
-	test('mc.patch(undefined, URL)', () => {
+	test('mc.update(undefined, URL)', () => {
 		const obj1 = undefined;
 		const obj2 = new URL('http://bar/');
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toStrictEqual(new URL('http://bar/'));
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(true);
 	});
-	test('mc.patch(URL, undefined)', () => {
+	test('mc.update(URL, undefined)', () => {
 		const obj1 = new URL('http://bar/');
 		const obj2 = undefined;
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toStrictEqual(new URL('http://bar/'));
 		expect(result === obj1).toBe(true);
 		expect(result === obj2).toBe(false);
 	});
-	test('mc.patch(URL, URL)', () => {
+	test('mc.update(URL, URL)', () => {
 		const obj1 = new URL('http://foo/');
 		const obj2 = new URL('http://bar/');
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toStrictEqual(new URL('http://bar/'));
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(true);
 	});
-	test('mc.patch(URL, Object)', () => {
+	test('mc.update(URL, Object)', () => {
 		const obj1 = new URL('http://foo/');
 		const obj2 = {a: 'a', b: 'b', c: 'c'};
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toStrictEqual({a: 'a', b: 'b', c: 'c'});
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(true);
 	});
-	test('mc.patch(Array, Object)', () => {
+	test('mc.update(Array, Object)', () => {
 		const obj1 = [1, 2, 3];
 		const obj2 = {a: 'a', b: 'b', c: 'c'};
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toStrictEqual({a: 'a', b: 'b', c: 'c'});
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(true);
 	});
-	test('mc.patch(Object, Array)', () => {
+	test('mc.update(Object, Array)', () => {
 		const obj1 = {a: 'a', b: 'b', c: 'c'};
 		const obj2 = [1, 2, 3];
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toStrictEqual([1, 2, 3]);
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(true);
 	});
-	test('mc.patch(String, String)', () => {
+	test('mc.update(String, String)', () => {
 		const obj1 = 'obj1';
 		const obj2 = 'obj2';
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toBe('obj2');
 		expect(result === obj1).toBe(false);
 		expect(result === obj2).toBe(true);
 	});
-	test('mc.patch(String, Number)', () => {
+	test('mc.update(String, Number)', () => {
 		const obj1 = 'obj1';
 		const obj2 = 2;
 
-		const result = mc.patch(obj1, obj2);
+		const result = mc.update(obj1, obj2);
 
 		expect(result).toBe(2);
 		expect(result === obj1).toBe(false);
