@@ -3,7 +3,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"version": "1.8.83",
+	"version": "1.8.84",
 	"license": "MIT",
 	"name": "@clevercanyon/merge-change.fork",
 	"description": "Simple library for deep merge of objects.",
@@ -42,7 +42,7 @@
 	"optionalDependencies": {},
 	"bundleDependencies": [],
 	"devDependencies": {
-		"@clevercanyon/dev-deps": "^1.0.201"
+		"@clevercanyon/dev-deps": "^1.0.214"
 	},
 	"overrides": {},
 	"cpu": ["x64", "arm64"],
